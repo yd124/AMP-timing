@@ -1,0 +1,74 @@
+<DATAFILE>
+
+[FILEINFO]
+file = '../../../../Data/wpd_all_10wks.csv'
+delimiter = comma
+header = {colorID, days, log10VL, data, uniqueID, id_var}
+
+[CONTENT]
+days = {use=time}
+log10VL = {use=observation, name=log10VL, type=continuous}
+data = {use=covariate, type=categorical}
+id_var = {use=identifier}
+
+<MODEL>
+
+[INDIVIDUAL]
+input = {initT_pop, aS_pop, omega_aS, dS_pop, omega_dS, tau_pop, lBt0_pop, omega_lBt0, dI_pop, w_pop, omega_w, omega_dI, omega_initT, lp_pop}
+
+DEFINITION:
+initT = {distribution=normal, typical=initT_pop, sd=omega_initT}
+aS = {distribution=logNormal, typical=aS_pop, sd=omega_aS}
+dS = {distribution=logNormal, typical=dS_pop, sd=omega_dS}
+tau = {distribution=logNormal, typical=tau_pop, no-variability}
+lBt0 = {distribution=normal, typical=lBt0_pop, sd=omega_lBt0}
+dI = {distribution=logitNormal, typical=dI_pop, sd=omega_dI}
+w = {distribution=logNormal, typical=w_pop, sd=omega_w}
+lp = {distribution=normal, typical=lp_pop, no-variability}
+
+[LONGITUDINAL]
+input = {a, b}
+file = 'Ref_model_1.txt'
+
+DEFINITION:
+log10VL = {distribution=logNormal, prediction=Vout, errorModel=combined1(a, b)}
+
+<FIT>
+data = log10VL
+model = log10VL
+
+<PARAMETER>
+a = {value=0.164862, method=MLE}
+aS_pop = {value=1.70882, method=MLE}
+b = {value=0.0766793, method=MLE}
+dI_pop = {value=0.7999, method=MLE}
+dS_pop = {value=0.0060865, method=MLE}
+initT_pop = {value=-4.46659, method=MLE}
+lBt0_pop = {value=-4.12258, method=MLE}
+lp_pop = {value=4.6, method=FIXED}
+omega_aS = {value=0.0489719, method=MLE}
+omega_dI = {value=2.06296, method=MLE}
+omega_dS = {value=0.0757278, method=MLE}
+omega_initT = {value=2.22551, method=MLE}
+omega_lBt0 = {value=0.0889839, method=MLE}
+omega_w = {value=0.46744, method=MLE}
+tau_pop = {value=0.05, method=FIXED}
+w_pop = {value=0.0717275, method=MLE}
+
+<MONOLIX>
+
+[TASKS]
+populationParameters()
+individualParameters(method = {conditionalMean, conditionalMode })
+fim(method = Linearization)
+logLikelihood(method = Linearization)
+plotResult(method = {outputplot, indfits, obspred, parameterdistribution, covariatemodeldiagnosis, randomeffects, covariancemodeldiagnosis, saemresults })
+
+[SETTINGS]
+GLOBAL:
+exportpath = '../'
+
+POPULATION:
+smoothingiterations = 300
+exploratoryiterations = 800
+

@@ -1,0 +1,80 @@
+<DATAFILE>
+
+[FILEINFO]
+file = '../../Data/wpd_all_10wks.csv'
+delimiter = comma
+header = {colorID, days, log10VL, data, uniqueID, id_var}
+
+[CONTENT]
+days = {use=time}
+log10VL = {use=observation, name=log10VL, type=continuous}
+data = {use=covariate, type=categorical}
+id_var = {use=identifier}
+
+<MODEL>
+
+[INDIVIDUAL]
+input = {initT_pop, aS_pop, omega_aS, dS_pop, omega_dS, tau_pop, lBt0_pop, omega_lBt0, dI_pop, lk_pop, omega_lk, lae_pop, omega_lae, lw_pop, omega_lw, dE_pop, lE50_pop, omega_initT, lp_pop, omega_dE}
+
+DEFINITION:
+initT = {distribution=normal, typical=initT_pop, sd=omega_initT}
+aS = {distribution=logNormal, typical=aS_pop, sd=omega_aS}
+dS = {distribution=logNormal, typical=dS_pop, sd=omega_dS}
+tau = {distribution=logNormal, typical=tau_pop, no-variability}
+lBt0 = {distribution=normal, typical=lBt0_pop, sd=omega_lBt0}
+dI = {distribution=logNormal, typical=dI_pop, no-variability}
+lk = {distribution=normal, typical=lk_pop, sd=omega_lk}
+lae = {distribution=normal, typical=lae_pop, sd=omega_lae}
+lw = {distribution=normal, typical=lw_pop, sd=omega_lw}
+dE = {distribution=logNormal, typical=dE_pop, sd=omega_dE}
+lE50 = {distribution=logNormal, typical=lE50_pop, no-variability}
+lp = {distribution=normal, typical=lp_pop, no-variability}
+
+[LONGITUDINAL]
+input = {a, b}
+file = '../../Models/Ref_model_2.txt'
+
+DEFINITION:
+log10VL = {distribution=normal, prediction=Vout, errorModel=combined1(a, b)}
+
+<FIT>
+data = log10VL
+model = log10VL
+
+<PARAMETER>
+a = {value=0.517413, method=MLE}
+aS_pop = {value=14.6149, method=MLE}
+b = {value=0.3, method=MLE}
+dE_pop = {value=0.253976, method=MLE}
+dI_pop = {value=0.9, method=FIXED}
+dS_pop = {value=0.0129983, method=MLE}
+initT_pop = {value=-9.76068, method=MLE}
+lBt0_pop = {value=-4.73459, method=MLE}
+lE50_pop = {value=2, method=FIXED}
+lae_pop = {value=1.85538, method=MLE}
+lk_pop = {value=-4.54535, method=MLE}
+lp_pop = {value=4.6, method=FIXED}
+lw_pop = {value=2.23077, method=MLE}
+omega_aS = {value=0.0223304, method=MLE}
+omega_dE = {value=1.69978, method=MLE}
+omega_dS = {value=0.0132264, method=MLE}
+omega_initT = {value=2.9771, method=MLE}
+omega_lBt0 = {value=0.00474907, method=MLE}
+omega_lae = {value=0.352013, method=MLE}
+omega_lk = {value=0.524321, method=MLE}
+omega_lw = {value=0.565539, method=MLE}
+tau_pop = {value=0.05, method=FIXED}
+
+<MONOLIX>
+
+[TASKS]
+populationParameters()
+individualParameters(method = {conditionalMean, conditionalMode })
+fim(method = Linearization)
+logLikelihood(method = Linearization)
+plotResult(method = {outputplot, indfits, obspred, parameterdistribution, covariatemodeldiagnosis, randomeffects, covariancemodeldiagnosis, saemresults })
+
+[SETTINGS]
+GLOBAL:
+exportpath = '1_Project_model_2_v1'
+
