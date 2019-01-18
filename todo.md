@@ -14,7 +14,10 @@ To do
 
  DONE Mid Jan 2019
 
-- Fabian can try to set up the Monolix to fit the data? I think we’ve decided on 3 models? 1. Basic with power law death rate 2. My monkey model 3. Monkey model + memory CD8 compartment ("smooth monkey" I’m calling it in my head)
+- Fabian can try to set up the Monolix to fit the data? I think we’ve decided on 3 models? 
+    1. Basic with power law death rate 
+    2. My monkey model 
+    3. Monkey model + memory CD8 compartment ("smooth monkey" I’m calling it in my head)
 
 DONE Mid Dec 2018
 
