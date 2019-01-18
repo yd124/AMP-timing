@@ -2,6 +2,7 @@
 To do
 ================
 
+- All (Bryan) learn about SAEM.
 - Bryan can explore the correlation problem.
 - Any of us can use the Monolix based on Fabian's initial set up to play around.
 - Dan will take the parameter estimates and start simulating data, both control and VRC01 cohorts. 
