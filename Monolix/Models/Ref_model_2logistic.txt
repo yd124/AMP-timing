@@ -1,5 +1,5 @@
 [LONGITUDINAL]
-input={initT, aS,dS, tau, Bt0, pP,pU,g, dI, k, aE, w, dE, E50}
+input={initT, aS,r,K, tau, Bt0, pP,pU,g, dI, k, aE, w, dE, E50}
 
 EQUATION:
 odeType=stiff
@@ -7,7 +7,7 @@ odeType=stiff
 ;initial conditions
 t_0 = initT 	;first positive time [days]
 
-S_0 = aS/dS	;assumes no real T cell depletion in very early infection
+S_0 = K			;assumes no real T cell depletion in very early infection
 E_0 = aE/dE        	;assumes no real immune response before first positive?
 V_0 = 0.03         	;viral load at 30 copies/mL detection limit
 
@@ -16,7 +16,7 @@ U_0 = tau*g*V_0/(pP+pU)
 P_0 =  (1-tau)*g*V_0/(pP+pU)
 
 ;ODE model equations
-ddt_S = aS - dS*S - Bt0*S*VP                      	;susceptible cells [cells/uL]
+ddt_S = aS + r*(1-S/K)*S - Bt0*S*VP                      	;susceptible cells [cells/uL]
 ddt_U = (1-tau)*Bt0*S*VP - dI*U - k*E*U	;unproductively infected [cells/uL]
 ddt_P = tau*Bt0*S*VP - dI*P - k*E*P	;productively infected cells [cells/uL]
 ddt_E = aE + w*E*(P+U)/(E+E50) - dE*E	; adaptive immune system [cells/uL]

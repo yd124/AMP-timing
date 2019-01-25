@@ -1,0 +1,87 @@
+<DATAFILE>
+
+[FILEINFO]
+file = '../../../../Data/wpd_all_10wks.csv'
+delimiter = comma
+header = {colorID, days, log10VL, data, uniqueID, id_var}
+
+[CONTENT]
+days = {use=time}
+log10VL = {use=observation, name=log10VL, type=continuous}
+data = {use=covariate, type=categorical}
+id_var = {use=identifier}
+
+<MODEL>
+
+[INDIVIDUAL]
+input = {initT_pop, aS_pop, tau_pop, dI_pop, dE_pop, omega_dE, Bt0_pop, g_pop, k_pop, aE_pop, w_pop, omega_w, E50_pop, omega_E50, omega_tau, pP_pop, pU_pop, omega_pU, omega_pP, r_pop, omega_r, K_pop, omega_K, omega_aS, omega_initT}
+
+DEFINITION:
+initT = {distribution=normal, typical=initT_pop, sd=omega_initT}
+aS = {distribution=logNormal, typical=aS_pop, sd=omega_aS}
+tau = {distribution=logNormal, typical=tau_pop, sd=omega_tau}
+dI = {distribution=logNormal, typical=dI_pop, no-variability}
+dE = {distribution=logNormal, typical=dE_pop, sd=omega_dE}
+Bt0 = {distribution=logNormal, typical=Bt0_pop, no-variability}
+g = {distribution=logNormal, typical=g_pop, no-variability}
+k = {distribution=logNormal, typical=k_pop, no-variability}
+aE = {distribution=logNormal, typical=aE_pop, no-variability}
+w = {distribution=logNormal, typical=w_pop, sd=omega_w}
+E50 = {distribution=logNormal, typical=E50_pop, sd=omega_E50}
+pP = {distribution=logNormal, typical=pP_pop, sd=omega_pP}
+pU = {distribution=logNormal, typical=pU_pop, sd=omega_pU}
+r = {distribution=logNormal, typical=r_pop, sd=omega_r}
+K = {distribution=logNormal, typical=K_pop, sd=omega_K}
+
+[LONGITUDINAL]
+input = {a}
+file = 'Ref_model_2logistic.txt'
+
+DEFINITION:
+log10VL = {distribution=normal, prediction=Vout, errorModel=constant(a)}
+
+<FIT>
+data = log10VL
+model = log10VL
+
+<PARAMETER>
+Bt0_pop = {value=0.0001, method=FIXED}
+E50_pop = {value=10, method=FIXED}
+K_pop = {value=200, method=MLE}
+a = {value=1, method=MLE}
+aE_pop = {value=0.00001, method=FIXED}
+aS_pop = {value=0.01, method=FIXED}
+dE_pop = {value=0.02, method=FIXED}
+dI_pop = {value=0.8, method=FIXED}
+g_pop = {value=23, method=FIXED}
+initT_pop = {value=0, method=FIXED}
+k_pop = {value=0.01, method=FIXED}
+omega_E50 = {value=1, method=FIXED}
+omega_K = {value=1, method=MLE}
+omega_aS = {value=1, method=MLE}
+omega_dE = {value=1, method=FIXED}
+omega_initT = {value=5, method=MLE}
+omega_pP = {value=1, method=MLE}
+omega_pU = {value=1, method=FIXED}
+omega_r = {value=1, method=MLE}
+omega_tau = {value=1, method=FIXED}
+omega_w = {value=1, method=FIXED}
+pP_pop = {value=50000, method=FIXED}
+pU_pop = {value=50000, method=FIXED}
+r_pop = {value=1, method=MLE}
+tau_pop = {value=0.05, method=FIXED}
+w_pop = {value=1, method=FIXED}
+
+<MONOLIX>
+
+[TASKS]
+populationParameters()
+individualParameters(method = {conditionalMean, conditionalMode })
+fim(method = Linearization)
+logLikelihood(method = Linearization)
+plotResult(method = {outputplot, indfits, obspred, parameterdistribution, covariatemodeldiagnosis, randomeffects, covariancemodeldiagnosis, saemresults })
+
+[SETTINGS]
+GLOBAL:
+exportpath = '../'
+
