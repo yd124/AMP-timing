@@ -1,0 +1,57 @@
+---
+title: "Process-NHP-VL"
+author: "Bryan Mayer"
+date: "2/14/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+Data processing:
+
+  1. transpose
+  2. remove pre-challenge data and subset to pre-10 weeks
+  3. rescale weeks to start at first positive and store true infection time relative to first positive (negative)
+  4. remove challenge time point and save cleaned data
+
+```{r clean_data}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+raw_VL = read.csv("../raw-data/VL.csv") %>%
+  select(weeks, everything(), -X) %>%
+  gather(animal_id, viral_load, -weeks) %>%
+  filter(!is.na(viral_load) & weeks < 10 & weeks >= 0) %>%
+  group_by(animal_id) %>%
+  mutate(
+    firstpos_wk = min(weeks[weeks > 0]),
+    true_time0 = -firstpos_wk,
+    weeks = weeks - firstpos_wk,
+    log10_VL = log10(viral_load)
+    )
+
+```
+
+
+```{r plot_data, fig.cap="Check data cleaning. Challenge day removed from final, saved data."}
+
+ggplot(raw_VL, aes(x = weeks, y = viral_load, colour = factor(weeks >= 0))) +
+  geom_point() +
+  geom_line() +
+  scale_color_discrete("", labels = c("Challenge day", "")) +
+  scale_y_log10() +
+  facet_wrap(~animal_id) +
+  theme(legend.position = "top")
+
+```
+
+```{r}
+raw_VL %>%
+  subset(weeks >= 0) %>%
+  select(animal_id, weeks, viral_load, log10_VL, true_time0) %>%
+  write_csv("../data/nhp_data.csv")
+```
