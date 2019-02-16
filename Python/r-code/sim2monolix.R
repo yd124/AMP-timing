@@ -44,12 +44,16 @@ tidy_sim = function(sparse_fname, truetime_fname = NULL){
   if(!is.null(truetime_fname)){
      time_dat = read.csv(truetime_fname, stringsAsFactors = F) %>%
       rename(simID = X, truetime = X0) %>%
-      mutate(simID = simID + 1)
+      mutate(simID = simID + 1, truetime = truetime/7)
       sparse_data_out = left_join(sparse_data, time_dat, by = "simID")
   } else sparse_data_out = sparse_data
   if(nrow(sparse_data) != nrow(sparse_data_out)) stop("merging error with true times")
   
-  sparse_data_out
+  sparse_data_out %>%
+    group_by(simID) %>%
+    mutate(filter = all(log10_VL < 0)) %>%
+    subset(!filter) %>%
+    select(-filter)
 }
 
 write.csv( tidy_sim(sparse_input, truetime_input), output_fname, row.names = F)
