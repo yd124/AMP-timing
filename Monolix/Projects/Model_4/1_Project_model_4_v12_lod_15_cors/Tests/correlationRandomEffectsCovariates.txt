@@ -1,0 +1,6 @@
+eta,covariate,statistic,p-value,test
+eta_initT,data,1.18144,0.394639,Fisher
+eta_dS,data,1.19319,0.408917,Fisher
+eta_lBt0,data,1.18255,0.394306,Fisher
+eta_lw,data,5.88273,0.0200344,Fisher
+eta_lI50,data,3.38906,0.0792675,Fisher

@@ -1,0 +1,89 @@
+<DATAFILE>
+
+[FILEINFO]
+file = '../../../../Data/wpd_all_10wks.csv'
+delimiter = comma
+header = {colorID, days, log10VL, data, uniqueID, id_var}
+
+[CONTENT]
+days = {use=time}
+log10VL = {use=observation, name=log10VL, type=continuous}
+data = {use=covariate, type=categorical}
+id_var = {use=identifier}
+
+<MODEL>
+
+[INDIVIDUAL]
+input = {initT_pop, aS_pop, dS_pop, omega_dS, tau_pop, lBt0_pop, omega_lBt0, dI_pop, lk_pop, lw_pop, omega_lw, f_pop, dp_pop, dE_pop, omega_initT, lp_pop, lI50_pop, omega_lI50, lod_pop, corr_lBt0_dS}
+
+DEFINITION:
+initT = {distribution=normal, typical=initT_pop, sd=omega_initT}
+aS = {distribution=logNormal, typical=aS_pop, no-variability}
+dS = {distribution=logNormal, typical=dS_pop, sd=omega_dS}
+tau = {distribution=logNormal, typical=tau_pop, no-variability}
+lBt0 = {distribution=normal, typical=lBt0_pop, sd=omega_lBt0}
+dI = {distribution=logNormal, typical=dI_pop, no-variability}
+lk = {distribution=normal, typical=lk_pop, no-variability}
+lw = {distribution=normal, typical=lw_pop, sd=omega_lw}
+f = {distribution=logitNormal, typical=f_pop, no-variability}
+dp = {distribution=logNormal, typical=dp_pop, no-variability}
+dE = {distribution=logNormal, typical=dE_pop, no-variability}
+lp = {distribution=normal, typical=lp_pop, no-variability}
+lI50 = {distribution=normal, typical=lI50_pop, sd=omega_lI50}
+lod = {distribution=logNormal, typical=lod_pop, no-variability}
+correlation = {level=id, r(lBt0, dS)=corr_lBt0_dS}
+
+[LONGITUDINAL]
+input = {a}
+
+file = 'Ref_model_4.1_lod.txt'
+
+DEFINITION:
+log10VL = {distribution=normal, prediction=Vout, errorModel=constant(a)}
+
+<FIT>
+data = log10VL
+model = log10VL
+
+<PARAMETER>
+a = {value=0.40603, method=MLE}
+aS_pop = {value=70, method=FIXED}
+corr_lBt0_dS = {value=0.998847, method=MLE}
+dE_pop = {value=1, method=FIXED}
+dI_pop = {value=0.9, method=FIXED}
+dS_pop = {value=0.0483029, method=MLE}
+dp_pop = {value=0.001, method=FIXED}
+f_pop = {value=0.9, method=FIXED}
+initT_pop = {value=-5.22143, method=MLE}
+lBt0_pop = {value=-4.81953, method=MLE}
+lI50_pop = {value=-0.320372, method=MLE}
+lk_pop = {value=-1.88566, method=MLE}
+lod_pop = {value=15, method=FIXED}
+lp_pop = {value=4.6, method=FIXED}
+lw_pop = {value=0.355465, method=MLE}
+omega_dS = {value=0.200413, method=MLE}
+omega_initT = {value=2.81122, method=MLE}
+omega_lBt0 = {value=0.05436, method=MLE}
+omega_lI50 = {value=0.543554, method=MLE}
+omega_lw = {value=0.5537, method=MLE}
+tau_pop = {value=0.05, method=FIXED}
+
+<MONOLIX>
+
+[TASKS]
+populationParameters()
+individualParameters(method = {conditionalMean, conditionalMode })
+fim(method = Linearization)
+logLikelihood(method = Linearization)
+plotResult(method = {outputplot, indfits, obspred, parameterdistribution, covariatemodeldiagnosis, randomeffects, covariancemodeldiagnosis, saemresults })
+
+[SETTINGS]
+GLOBAL:
+exportpath = '../'
+
+POPULATION:
+exploratoryautostop = no
+smoothingautostop = no
+smoothingiterations = 500
+exploratoryiterations = 1500
+
