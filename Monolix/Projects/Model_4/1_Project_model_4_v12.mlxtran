@@ -34,7 +34,7 @@ lI50 = {distribution=normal, typical=lI50_pop, sd=omega_lI50}
 [LONGITUDINAL]
 input = {a}
 
-file = '../../Models/Ref_model_4.1.txt'
+file = '../../Models/Ref_model_4.1_lod.txt'
 
 DEFINITION:
 log10VL = {distribution=normal, prediction=Vout, errorModel=constant(a)}
@@ -57,6 +57,7 @@ lI50_pop = {value=-0.469229, method=MLE}
 lk_pop = {value=-1.7975, method=MLE}
 lp_pop = {value=4.6, method=FIXED}
 lw_pop = {value=0.422035, method=MLE}
+lod_pop = {value=30, method=FIXED}
 omega_dS = {value=0.0393871, method=MLE}
 omega_initT = {value=2.62536, method=MLE}
 omega_lBt0 = {value=0.0249521, method=MLE}

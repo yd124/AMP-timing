@@ -54,7 +54,7 @@ dI_pop = {value=0.9, method=FIXED}
 dS_pop = {value=0.0483029, method=MLE}
 dp_pop = {value=0.001, method=FIXED}
 f_pop = {value=0.9, method=FIXED}
-initT_pop = {value=-5.22143, method=MLE}
+initT_pop = {value=0, method=MLE}
 lBt0_pop = {value=-4.81953, method=MLE}
 lI50_pop = {value=-0.320372, method=MLE}
 lk_pop = {value=-1.88566, method=MLE}
@@ -62,7 +62,7 @@ lod_pop = {value=15, method=FIXED}
 lp_pop = {value=4.6, method=FIXED}
 lw_pop = {value=0.355465, method=MLE}
 omega_dS = {value=0.200413, method=MLE}
-omega_initT = {value=2.81122, method=MLE}
+omega_initT = {value=3, method=FIXED}
 omega_lBt0 = {value=0.05436, method=MLE}
 omega_lI50 = {value=0.543554, method=MLE}
 omega_lw = {value=0.5537, method=MLE}
