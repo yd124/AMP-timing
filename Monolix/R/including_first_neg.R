@@ -15,7 +15,7 @@ for(ID in IDs){
 
   row_temp = data_ind[which.min(as.numeric(data_ind[,"days"])),]
   row_temp["days"]=as.numeric(row_temp["days"])-3.5
-  row_temp["log10VL"]=log10(15)
+  row_temp["log10VL"]=log10(30)
   row_temp["Cens"]=1
   
   data_ind = rbind(row_temp,data_ind)

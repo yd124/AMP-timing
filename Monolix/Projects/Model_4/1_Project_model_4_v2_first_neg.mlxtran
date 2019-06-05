@@ -15,7 +15,7 @@ Cens = {use=censored}
 <MODEL>
 
 [INDIVIDUAL]
-input = {initT_pop, aS_pop, dS_pop, omega_dS, tau_pop, lBt0_pop, omega_lBt0, dI_pop, lk_pop, lw_pop, omega_lw, f_pop, dp_pop, dE_pop, omega_initT, lp_pop, lI50_pop, omega_lI50, corr_lBt0_dS}
+input = {initT_pop, aS_pop, dS_pop, omega_dS, tau_pop, lBt0_pop, omega_lBt0, dI_pop, lk_pop, lw_pop, omega_lw, f_pop, dp_pop, dE_pop, omega_initT, lp_pop, lI50_pop, omega_lI50}
 
 DEFINITION:
 initT = {distribution=normal, typical=initT_pop, sd=omega_initT}
@@ -31,10 +31,10 @@ dp = {distribution=logNormal, typical=dp_pop, no-variability}
 dE = {distribution=logNormal, typical=dE_pop, no-variability}
 lp = {distribution=normal, typical=lp_pop, no-variability}
 lI50 = {distribution=normal, typical=lI50_pop, sd=omega_lI50}
-correlation = {level=id, r(lBt0, dS)=corr_lBt0_dS}
 
 [LONGITUDINAL]
 input = {a}
+
 file = '../../Models/Ref_model_4.2_first_neg.txt'
 
 DEFINITION:
@@ -45,25 +45,24 @@ data = log10VL
 model = log10VL
 
 <PARAMETER>
-a = {value=0.660164, method=MLE}
+a = {value=0.646033, method=MLE}
 aS_pop = {value=70, method=FIXED}
-corr_lBt0_dS = {value=0.969012, method=MLE}
 dE_pop = {value=1, method=FIXED}
 dI_pop = {value=0.9, method=FIXED}
-dS_pop = {value=0.0561528, method=MLE}
+dS_pop = {value=0.0566852, method=MLE}
 dp_pop = {value=0.001, method=FIXED}
 f_pop = {value=0.9, method=FIXED}
-initT_pop = {value=-1.13255, method=MLE}
-lBt0_pop = {value=-4.60876, method=MLE}
-lI50_pop = {value=-1.04408, method=MLE}
-lk_pop = {value=-1.39324, method=MLE}
+initT_pop = {value=-2.39469, method=MLE}
+lBt0_pop = {value=-4.61285, method=MLE}
+lI50_pop = {value=-1.09468, method=MLE}
+lk_pop = {value=-1.48052, method=MLE}
 lp_pop = {value=4.6, method=FIXED}
-lw_pop = {value=0.645344, method=MLE}
-omega_dS = {value=0.321802, method=MLE}
-omega_initT = {value=0.2, method=FIXED}
-omega_lBt0 = {value=0.223562, method=MLE}
-omega_lI50 = {value=0.0409113, method=MLE}
-omega_lw = {value=0.209996, method=MLE}
+lw_pop = {value=0.772141, method=MLE}
+omega_dS = {value=0.063349, method=MLE}
+omega_initT = {value=0.5, method=FIXED}
+omega_lBt0 = {value=0.0633918, method=MLE}
+omega_lI50 = {value=0.0912248, method=MLE}
+omega_lw = {value=0.189863, method=MLE}
 tau_pop = {value=0.05, method=FIXED}
 
 <MONOLIX>
