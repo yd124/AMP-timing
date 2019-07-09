@@ -1,25 +1,23 @@
 <DATAFILE>
 
 [FILEINFO]
-file = '../../../../Data/wpd_all_10wks_1st_neg.csv'
+file = '../../../../Data/DBRout_RV217.csv'
 delimiter = comma
-header = {colorID, days, log10VL, data, uniqueID, id_var, Cens}
+header = {EMPTY, days, VL, ID, CD4, CD8, log10VL}
 
 [CONTENT]
 days = {use=time}
+ID = {use=identifier}
 log10VL = {use=observation, name=log10VL, type=continuous}
-data = {use=covariate, type=categorical}
-id_var = {use=identifier}
-Cens = {use=censored}
 
 <MODEL>
 
 [INDIVIDUAL]
-input = {initT_pop, aS_pop, dS_pop, omega_dS, tau_pop, lBt0_pop, omega_lBt0, dI_pop, lk_pop, lw_pop, omega_lw, f_pop, dp_pop, dE_pop, omega_initT, lp_pop, lI50_pop, omega_lI50}
+input = {initT_pop, aS_pop, dS_pop, omega_dS, tau_pop, lBt0_pop, omega_lBt0, dI_pop, lk_pop, lw_pop, omega_lw, f_pop, dp_pop, dE_pop, omega_initT, lp_pop, lI50_pop, omega_lI50, omega_aS, lae_pop, omega_lae}
 
 DEFINITION:
 initT = {distribution=normal, typical=initT_pop, sd=omega_initT}
-aS = {distribution=logNormal, typical=aS_pop, no-variability}
+aS = {distribution=logNormal, typical=aS_pop, sd=omega_aS}
 dS = {distribution=logNormal, typical=dS_pop, sd=omega_dS}
 tau = {distribution=logNormal, typical=tau_pop, no-variability}
 lBt0 = {distribution=normal, typical=lBt0_pop, sd=omega_lBt0}
@@ -31,11 +29,11 @@ dp = {distribution=logNormal, typical=dp_pop, no-variability}
 dE = {distribution=logNormal, typical=dE_pop, no-variability}
 lp = {distribution=normal, typical=lp_pop, no-variability}
 lI50 = {distribution=normal, typical=lI50_pop, sd=omega_lI50}
+lae = {distribution=logNormal, typical=lae_pop, sd=omega_lae}
 
 [LONGITUDINAL]
 input = {a}
-
-file = 'Ref_model_4.2_first_neg.txt'
+file = 'Ref_model_4.txt'
 
 DEFINITION:
 log10VL = {distribution=normal, prediction=Vout, errorModel=constant(a)}
@@ -55,13 +53,16 @@ f_pop = {value=0.9, method=FIXED}
 initT_pop = {value=-2.39469, method=MLE}
 lBt0_pop = {value=-4.61285, method=MLE}
 lI50_pop = {value=-1.09468, method=MLE}
+lae_pop = {value=1, method=MLE}
 lk_pop = {value=-1.48052, method=MLE}
 lp_pop = {value=4.6, method=FIXED}
 lw_pop = {value=0.772141, method=MLE}
+omega_aS = {value=1, method=MLE}
 omega_dS = {value=0.063349, method=MLE}
 omega_initT = {value=0.5, method=FIXED}
 omega_lBt0 = {value=0.0633918, method=MLE}
 omega_lI50 = {value=0.0912248, method=MLE}
+omega_lae = {value=1, method=MLE}
 omega_lw = {value=0.189863, method=MLE}
 tau_pop = {value=0.05, method=FIXED}
 
