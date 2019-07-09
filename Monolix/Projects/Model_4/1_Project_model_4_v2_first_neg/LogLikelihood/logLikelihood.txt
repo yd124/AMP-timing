@@ -1,5 +1,5 @@
 criteria,linearization
--2LL,1407.261
-AIC,1435.261
-BIC,1454.878
+-2LL,1207.471
+AIC,1233.471
+BIC,1251.687
 stdError,

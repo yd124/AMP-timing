@@ -1,12 +1,12 @@
 [LONGITUDINAL]
-input={initT, aS,dS, tau, lBt0,lp, dI, lk, lae,f,dp, lw, dE, lI50};, qinitV}
+input={initT, aS,dS, tau, lBt0,lp, dI, lk, f,dp, lw, dE, lI50};, qinitV}
 
 EQUATION:
 odeType=stiff
 
 ;initV = qinitV*(30/1e3)
 
-
+lae = lk
 g = 23          ; virus clearance rate [1/day]
 
 ;parameter transformations
@@ -20,9 +20,14 @@ aE = 10^(lae) ; constant birth rate of effectors
 ;initial conditions
 t_0 = initT
 S_0 = aS/dS                             ; assumes no real T cell depletion in very early infection
-V_0 = 0;initV ;0.03                       ; viral load at 30 copies/mL detection limit
-AU_0 = 0; tau*(1-lam)*I_0
-AP_0 = 1e-6; (1-tau)*(1-lam)*I_0
+
+
+I_0 = 1e-6;g*V_0/p
+
+V_0 = p*I_0/g; lod/1e3                       ; viral load at 30 copies/mL detection limit
+
+AU_0 = tau*I_0
+AP_0 = (1-tau)*I_0
 P_0 = aE/dp
 E_0 = 0                                  ; assumes no real immune response before first positive?
 
@@ -42,5 +47,3 @@ Vout = log10(V*1e3)
 
 OUTPUT:
 output={Vout}
-
-
