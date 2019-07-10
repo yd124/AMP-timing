@@ -15,13 +15,17 @@ colnames(datacopy)[9]="ytypeID"
 datacopy = cbind(datacopy,rep(0,dim(datacopy)[1]))
 colnames(datacopy)[10]="Cens"
 
-datacopy$VL[which(datacopy$VL<=30)]=30
+
 datacopy$Cens[which(datacopy$VL<=30)]=1
 
 datanew=c()
 for(ID in IDs){
   
   data_ind = datacopy[which(ID==datacopy$ID),]
+  
+  if (data_ind$VL[1]==1){
+    data_ind = data_ind[which(data_ind$days>0),]
+  }
   
   data_ind$days=data_ind$days-min(data_ind$days)
   data_ind$y = log10(data_ind$VL)
@@ -37,8 +41,8 @@ for(ID in IDs){
   data_ind_CD8s$y = log10(data_ind_CD8s$CD8)
   data_ind_CD8s$ytype = rep(3, length(data_ind_CD8s$ytype))
   data_ind_CD8s$ytypeID = rep("CD8s", length(data_ind_CD8s$ytype))
-  # add to individual rows
-
+ 
+   # add to individual rows
   datanew = rbind(datanew,data_ind,data_ind_CD4s,data_ind_CD8s)
   
 }
