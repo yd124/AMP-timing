@@ -3,12 +3,12 @@
 [FILEINFO]
 file = '../../../../Data/DBRout_RV217.csv'
 delimiter = comma
-header = {EMPTY, days, VL, ID, CD4, CD8, log10VL}
+header = {EMPTY, days, log10VL, ID}
 
 [CONTENT]
 days = {use=time}
-ID = {use=identifier}
 log10VL = {use=observation, name=log10VL, type=continuous}
+ID = {use=identifier}
 
 <MODEL>
 
@@ -32,6 +32,7 @@ lI50 = {distribution=normal, typical=lI50_pop, sd=omega_lI50}
 
 [LONGITUDINAL]
 input = {a}
+
 file = 'Ref_model_4.2_first_neg.txt'
 
 DEFINITION:
