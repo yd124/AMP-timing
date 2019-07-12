@@ -1,0 +1,275 @@
+---
+title: "RV217 - Data Cleaning"
+author: "Bryan Mayer"
+date: "7/10/2019"
+output: 
+  html_document:
+    keep_md: true
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+The following script cleans and tidies the raw data. 
+
+**Some notes:**
+
+  - `days` was recalculated to be from the time of the first positive viral load. 
+    - Original days variable is now called `days_dx` for days from diagnosis (APTIMA  detection).
+  - Used Dan's variable name conventions so our datasets have similar headers
+  - Removed any row with missing ID and combined missing day/date: there was never any output on those rows.
+    - This drops a lot of the notes columns
+
+**Some issues:**
+
+- Not every participant has site information
+- Not sure what many of the variables mean
+- APTIMA needs an LLoQ? Currently: 
+    - NR = 0
+    - R or R/NR = min(APTIMA)
+- Do we need to worry about ARV, some of the dates in the notes are not exact
+- Did not clean the date variable (`draw_date`)
+
+# Load data and clean names
+
+```{r load-data}
+library(tidyverse)
+library(kableExtra)
+
+fix_names = function(x){
+  #this loads the header exactly
+  suppressMessages({
+    x = read_csv("../data/RV217Master.csv", n_max = 0) %>%
+      names()
+    })    
+  
+  x %>%
+    str_replace_all("#", "") %>%
+    str_replace_all("%", "pct") %>%
+    tidy_names(syntactic = T, quiet = T) 
+}
+
+
+# read.csv loads the data than read_csv
+rv217 = read.csv("../data/RV217Master.csv", stringsAsFactors = F,
+                 na.strings = "") %>%
+  as_tibble(.name_repair = fix_names) %>%
+  #using Dan's naming conventions
+  rename(
+    ID = PIN,
+    draw_date = Draw.Date,
+    VL = Abbott.RealTime.HIV.1.RNA..Copies.ml.,
+    log10VL = Abbott.RealTime.HIV.1.RNA.Log..Copies.ml.,
+    VL_site = VL.run.by.MHRP..M..or.Site..S.,
+    visit_code = Visit
+  ) %>%
+  mutate(
+    VLunit = "copies/mL"
+  )
+
+glimpse(rv217)
+
+```
+
+# Error checking
+
+Missing PIN seems to come from populated notes columns
+- no cases of viral load or cell data in them so removing
+
+```{r missing-ids}
+
+missing_id = rv217 %>%
+  subset(is.na(ID))
+
+select(missing_id, contains("VL"), contains("CD"), contains("B.")) %>%
+  na.omit %>%
+  nrow()
+
+rv217 = subset(rv217, !is.na(ID))
+
+```
+
+Checking types of our important endpoints (viral load and cell counts). Random character string in log10VL
+
+```{r endpoint-types}
+
+rv217 %>%
+  select(contains("VL"), contains("CD"), contains("B.")) %>%
+  summarize_all(class) %>%
+  gather()
+
+walk(rv217$log10VL, function(i){
+  if(!is.na(i) & is.na(as.numeric(i))) print(i)
+})
+
+rv217$log10VL[which(rv217$log10VL == "Aptima Reactive")] = NA
+rv217$log10VL = as.numeric(rv217$log10VL)
+
+rv217 %>%
+  select(contains("VL"), contains("CD"), contains("B.")) %>%
+  summarize_all(class) %>%
+  gather()
+
+```
+
+# Variable munging
+
+##  Priority, Site
+
+There is one unique value per participant. Not sure what prioirty is but site is important so will clean that into Uganda or Thailand unless it is missing.
+
+```{r}
+priority_site_dat = rv217 %>% group_by(ID) %>%
+  summarize(
+    total_priority = n_distinct(na.omit(Priority)),
+    priority = paste0(na.omit(Priority), collapse = ""),
+    total_site = n_distinct(na.omit(Site)),
+    site_raw = paste0(na.omit(Site), collapse = "")
+  )
+
+priority_site_dat %>%
+  subset(total_priority > 1 | total_site > 1) %>%
+  nrow()
+
+unique(priority_site_dat$priority)
+unique(priority_site_dat$site_raw)
+
+priority_site_dat = priority_site_dat %>%
+  mutate(site = case_when(
+    str_detect(tolower(site_raw), "th") ~ "Thailand",
+    str_detect(tolower(site_raw), "ug") ~ "Uganda",
+    TRUE ~ NA_character_
+  ))
+
+unique(priority_site_dat$site)
+with(priority_site_dat, table(site_raw, site, useNA = "ifany"))
+
+priority_site_dat %>%
+  subset(is.na(site)) %>%
+  select(ID, site) 
+
+```
+
+
+```{r merge-site-priority}
+
+rv217 = rv217 %>%
+  select(-Priority, -Site) %>%
+  left_join(select(priority_site_dat, ID, priority, site), by = "ID") %>%
+  select(-visit_code, -Notes, -EIA, -WB, everything()) # moves misc. variables to the end
+  
+```
+
+## APTIMA cleaning
+
+Make a variable that is measurement only truncated at minimum (for R and R/NR), truncated at 0 for NR and left missing for weird inputs
+
+```{r aptima}
+aptima_vals = map_chr(rv217$APTIMA, function(i){
+  if(!is.na(i) & is.na(suppressWarnings(as.numeric(i)))) return(i) else return(NA_character_)
+}) 
+
+aptima_vals %>% unique()
+
+rv217 = rv217 %>%
+  mutate(
+    APTIMA_num_temp = suppressWarnings(as.numeric(APTIMA)),
+    APTIMA_num = case_when(
+      APTIMA == "NR" ~ 0,
+      APTIMA %in% c("R", "R/NR") ~ min(APTIMA_num_temp, na.rm = T),
+      TRUE ~ APTIMA_num_temp
+    )
+  ) %>%
+  select(-APTIMA_num_temp)
+  
+```
+
+
+# days variable
+
+## Days variable error checking
+
+There are several cases with missing day variables. Many are due to lack of a date variable in combination with no viral load or cell counts, so we can remove those rows.
+
+```{r days-errors}
+missing_time_all = rv217 %>%
+  group_by(ID) %>%
+  mutate(
+    any_missing_day = any(is.na(days.from.1st.pos))
+  ) %>%
+  subset(any_missing_day)
+
+# missing times of + VL collection
+vl_missing_time = missing_time_all %>%
+  group_by(ID) %>%
+  mutate(
+   vl_missing_time = any(is.na(days.from.1st.pos) & !is.na(VL))
+  ) %>%
+  subset(vl_missing_time)
+
+ids_missing_days = unique(vl_missing_time$ID)
+
+#missing both (checking if we can just exclude these)
+missing_time_vl = missing_time_all %>%
+  subset(!ID %in% ids_missing_days) %>%
+  select(ID, days.from.1st.pos, draw_date, contains("VL"), contains("CD"), contains("B."))
+  
+# one weird entry
+missing_time_vl %>%
+  subset(is.na(days.from.1st.pos) & !is.na(draw_date))
+
+```
+
+```{r handling-specific-time}
+
+clean_vl_missing_time = vl_missing_time %>%
+  group_by(ID) %>%
+  mutate(
+    infection_time = na.omit(draw_date[APTIMA == "R"]),
+    days.from.1st.pos = as.numeric(difftime(as.Date(draw_date, format = "%d-%b-%y"),
+                                 as.Date(infection_time, format = "%d-%b-%y"), 
+                                 units = "days"))
+  ) %>%
+  select(-infection_time, -any_missing_day, -vl_missing_time)
+
+
+```
+
+## Days variable creation
+
+```{r}
+rv217 = rv217 %>%
+  subset(!is.na(days.from.1st.pos) & !is.na(draw_date)) %>%
+  subset(!ID %in% ids_missing_days) %>% # these are processed separately
+  bind_rows(clean_vl_missing_time) %>% # and added back here
+  rename(days_dx = days.from.1st.pos) %>%
+  group_by(ID) %>%
+  mutate(
+    posVL = !is.na(VL),
+    days = days_dx - min(days_dx[posVL])
+  ) 
+
+any(is.na(rv217$days))
+
+```
+
+
+# Finalize
+
+Order and save
+
+```{r save-data}
+names(rv217) = str_remove_all(names(rv217), "\\.")
+glimpse(rv217)
+
+
+rv217 %>%
+  select(ID, draw_date, days, VL, log10VL, VLunit, posVL, CD4, CD8, NK, B,
+         APTIMA, APTIMA_num, days_dx, contains("pct"), everything()) %>%
+  write_csv("../data/RV217Clean.csv")
+
+
+```
