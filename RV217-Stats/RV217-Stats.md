@@ -27,7 +27,7 @@ library(tidyverse)
 ```
 
 ```
-## ── Attaching packages ──────────────────────────────────────────────────────── tidyverse 1.2.1 ──
+## ── Attaching packages ────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
 ```
 
 ```
@@ -38,7 +38,7 @@ library(tidyverse)
 ```
 
 ```
-## ── Conflicts ─────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ── Conflicts ───────────────────────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()
 ```
@@ -85,8 +85,8 @@ rv217 = read_csv("../data/RV217Clean.csv") %>%
 
 # APTIMA vs. VL
 
+Moderate correlation using any viral load but very highly correlated using first positive or dx only. When taking the ratio of the measures, they are almost perfectly correlated specifically at first positive viral load.
 
-Using the raw data
 
 ```r
 cor_apt_vl = rv217 %>%
@@ -122,7 +122,7 @@ ggplot(data = rv217, aes(x = VL, y = APTIMA_num)) +
 
 ```r
 rv217_firstpos = rv217  %>%
-  group_by(ID) %>%
+  group_by(ID, site) %>%
   summarize(
     APTIMA_dx = APTIMA_num2[days_dx == 0],
     APTIMA_firstVL = APTIMA_num2[days == 0],
@@ -144,7 +144,7 @@ first_pos_cor = rv217_firstpos %>%
 rv217_firstpos %>%
   ggplot(aes(x = firstVL, y = APTIMA_value)) +
   scale_x_log10("First pos. VL") +
-  scale_y_continuous() +
+  scale_y_log10() +
   geom_point() +
   geom_text(data = first_pos_cor, 
             aes(label = paste("pho =", round(spearman_cor, 2)),
@@ -157,7 +157,16 @@ rv217_firstpos %>%
     strip.placement = "outside",
     strip.background = element_blank(),
     strip.text = element_text(size = 12)
-  )
+  ) +
+  geom_smooth()
+```
+
+```
+## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+```
+
+```
+## Warning: Removed 26 rows containing non-finite values (stat_smooth).
 ```
 
 ```
@@ -165,3 +174,36 @@ rv217_firstpos %>%
 ```
 
 ![](RV217-Stats_files/figure-html/dx-vs-firstpos-1.png)<!-- -->
+
+
+
+```r
+mod = rv217_firstpos %>%
+  spread(APTIMA_time, APTIMA_value) %>%
+  subset(APTIMA_firstVL > 2) %>%
+  lm(log(firstVL) ~ log(APTIMA_firstVL), data = .)
+```
+
+
+
+
+```r
+rv217_firstpos %>%
+  spread(APTIMA_time, APTIMA_value) %>%
+  ggplot(aes(x = firstVL, y = APTIMA_firstVL, colour = site)) +
+  scale_x_log10("First pos. VL") +
+  scale_y_log10("APTIMA value") +
+  geom_point() +
+  theme(
+    axis.title.y = element_blank(),
+    strip.placement = "outside",
+    strip.background = element_blank(),
+    strip.text = element_text(size = 12)
+  )
+```
+
+```
+## Warning: Removed 14 rows containing missing values (geom_point).
+```
+
+![](RV217-Stats_files/figure-html/unnamed-chunk-1-1.png)<!-- -->
