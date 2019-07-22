@@ -376,14 +376,17 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">RV217 - Data Cleaning</h1>
 <h4 class="author">Bryan Mayer</h4>
-<h4 class="date">7/10/2019</h4>
+<h4 class="date">7/22/2019</h4>
 
 </div>
 
 <div id="TOC">
 <ul>
 <li><a href="#load-data-and-clean-names">Load data and clean names</a></li>
-<li><a href="#error-checking">Error checking</a></li>
+<li><a href="#error-checking">Error checking</a><ul>
+<li><a href="#dealing-with-missing-ids">Dealing with missing IDS</a></li>
+<li><a href="#variable-types">Variable types</a></li>
+</ul></li>
 <li><a href="#variable-munging">Variable munging</a><ul>
 <li><a href="#priority-site">Priority, Site</a></li>
 <li><a href="#aptima-cleaning">APTIMA cleaning</a></li>
@@ -392,11 +395,15 @@ $(document).ready(function () {
 <li><a href="#days-variable-error-checking">Days variable error checking</a></li>
 <li><a href="#days-variable-creation">Days variable creation</a></li>
 </ul></li>
+<li><a href="#arv-and-primary-kinetics">ARV and Primary Kinetics</a><ul>
+<li><a href="#arv">ARV</a></li>
+<li><a href="#primary-kinetics">Primary kinetics</a></li>
+</ul></li>
 <li><a href="#finalize">Finalize</a></li>
 </ul>
 </div>
 
-<p>The following script cleans and tidies the raw RV217 data. It also cleans and saves supplementary table 4 from the paper at the end.</p>
+<p>The following script cleans and tidies the raw RV217 data.</p>
 <p><strong>Some notes:</strong></p>
 <ul>
 <li><code>days</code> was recalculated to be from the time of the first positive viral load.
@@ -404,10 +411,8 @@ $(document).ready(function () {
 <li>Original days variable is now called <code>days_dx</code> for days from diagnosis (APTIMA detection).</li>
 </ul></li>
 <li>Used Dan’s variable name conventions so our datasets have similar headers</li>
-<li>Removed any row with missing ID and combined missing day/date: there was never any output on those rows.
-<ul>
-<li>This drops a lot of the notes columns</li>
-</ul></li>
+<li>No long removing missing IDs, updated processing to handle this better</li>
+<li>Added a variable for arv. arv day is relative to first positive viral load.</li>
 </ul>
 <p><strong>Some issues:</strong></p>
 <ul>
@@ -415,11 +420,9 @@ $(document).ready(function () {
 <li>Not sure what many of the variables mean</li>
 <li>APTIMA needs an LLoQ? Currently:
 <ul>
-<li>NR = 0</li>
-<li>R or R/NR = min(APTIMA)</li>
+<li>NR, R or R/NR = NA</li>
 </ul></li>
-<li>Do we need to worry about ARV, some of the dates in the notes are not exact</li>
-<li>Did not clean the date variable (<code>draw_date</code>)</li>
+<li>Date variable was used as needed but not generally cleaned for IDs without issues and without ARV (<code>draw_date</code>)</li>
 </ul>
 <div id="load-data-and-clean-names" class="section level1">
 <h1>Load data and clean names</h1>
@@ -429,12 +432,12 @@ $(document).ready(function () {
 ##   [.quosures     rlang
 ##   c.quosures     rlang
 ##   print.quosures rlang</code></pre>
-<pre><code>## ── Attaching packages ────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
+<pre><code>## ── Attaching packages ─────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
 <pre><code>## ✔ ggplot2 3.1.1     ✔ purrr   0.3.2
 ## ✔ tibble  2.1.3     ✔ dplyr   0.8.1
 ## ✔ tidyr   0.8.3     ✔ stringr 1.4.0
 ## ✔ readr   1.3.1     ✔ forcats 0.4.0</code></pre>
-<pre><code>## ── Conflicts ───────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+<pre><code>## ── Conflicts ────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()</code></pre>
 <pre class="r"><code>library(kableExtra)</code></pre>
@@ -458,7 +461,7 @@ $(document).ready(function () {
 
 
 # read.csv loads the data than read_csv
-rv217 = read.csv(&quot;../../data/RV217Master.csv&quot;, stringsAsFactors = F,
+rv217_raw = read.csv(&quot;../../data/RV217Master.csv&quot;, stringsAsFactors = F,
                  na.strings = &quot;&quot;) %&gt;%
   as_tibble(.name_repair = fix_names) %&gt;%
   #using Dan&#39;s naming conventions
@@ -474,7 +477,7 @@ rv217 = read.csv(&quot;../../data/RV217Master.csv&quot;, stringsAsFactors = F,
     VLunit = &quot;copies/mL&quot;
   )
 
-glimpse(rv217)</code></pre>
+glimpse(rv217_raw)</code></pre>
 <pre><code>## Observations: 1,489
 ## Variables: 23
 ## $ Notes             &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA…
@@ -503,17 +506,113 @@ glimpse(rv217)</code></pre>
 </div>
 <div id="error-checking" class="section level1">
 <h1>Error checking</h1>
-<p>Missing PIN seems to come from populated notes columns - no cases of viral load or cell data in them so removing</p>
-<pre class="r"><code>missing_id = rv217 %&gt;%
+<div id="dealing-with-missing-ids" class="section level2">
+<h2>Dealing with missing IDS</h2>
+<p>Missing PIN seems to come from populated notes columns</p>
+<ul>
+<li>no cases of viral load or cell data</li>
+</ul>
+<pre class="r"><code>missing_id = rv217_raw %&gt;%
   subset(is.na(ID))
 
-select(missing_id, contains(&quot;VL&quot;), contains(&quot;CD&quot;), contains(&quot;B.&quot;)) %&gt;%
+nrow(missing_id)</code></pre>
+<pre><code>## [1] 18</code></pre>
+<pre class="r"><code>select(missing_id, contains(&quot;VL&quot;), contains(&quot;CD&quot;), contains(&quot;B.&quot;)) %&gt;%
   na.omit %&gt;%
   nrow()</code></pre>
 <pre><code>## [1] 0</code></pre>
-<pre class="r"><code>rv217 = subset(rv217, !is.na(ID))</code></pre>
+<ul>
+<li>There are <strong>three</strong> rows without any data so removing them.</li>
+</ul>
+<pre class="r"><code>full_missing_rows = map(1:nrow(rv217_raw), function(i){
+  if(all(is.na(select(rv217_raw, -VLunit)[i, ]))) i
+}) %&gt;%
+  flatten_dbl()
+
+full_missing_rows</code></pre>
+<pre><code>## [1] 843 844 863</code></pre>
+<pre class="r"><code>x = nrow(rv217_raw)
+x</code></pre>
+<pre><code>## [1] 1489</code></pre>
+<pre class="r"><code>rv217_raw = rv217_raw[-c(full_missing_rows), ]
+nrow(rv217_raw)</code></pre>
+<pre><code>## [1] 1486</code></pre>
+<pre class="r"><code>if(x - nrow(rv217_raw) != 3) stop(&quot;total missing rows has changed&quot;) else rm(x)
+
+# confirm
+map(1:nrow(rv217_raw), function(i){
+  if(all(is.na(select(rv217_raw, -VLunit)[i, ]))) i
+}) %&gt;%
+  flatten_dbl()</code></pre>
+<pre><code>## numeric(0)</code></pre>
+<ul>
+<li>Identifying which missing IDs are within a series of the same ID</li>
+</ul>
+<p>If they are, we can just use locf (assuming master is sorted), otherwise it has to be dealt with manually. There were three cases and in each of these cases, the relevant note/visit code aligns with using locf.</p>
+<pre class="r"><code>tmp_missing_id = map_df(which(is.na(rv217_raw$ID)), function(i){
+  rows = c(i - 1, i, i + 1)
+  tibble(
+    missing_row = i,
+    check_rows = str_c(rows, collapse = &quot;,&quot;),
+    check_id = paste(map_dbl(rows, ~(rv217_raw$ID[.x])), collapse = &quot;,&quot;),
+    same = str_split_fixed(check_id, &quot;,&quot;, n = 3)[,1] == str_split_fixed(check_id, &quot;,&quot;, n = 3)[,3] 
+  )
+})
+
+tmp_missing_id</code></pre>
+<pre><code>## # A tibble: 15 x 4
+##    missing_row check_rows     check_id       same 
+##          &lt;int&gt; &lt;chr&gt;          &lt;chr&gt;          &lt;lgl&gt;
+##  1         350 349,350,351    40100,NA,40100 TRUE 
+##  2         427 426,427,428    40168,NA,40168 TRUE 
+##  3         519 518,519,520    40257,NA,40265 FALSE
+##  4         672 671,672,673    40436,NA,40436 TRUE 
+##  5         798 797,798,799    40577,NA,40577 TRUE 
+##  6         813 812,813,814    10753,NA,10753 TRUE 
+##  7         817 816,817,818    10753,NA,10753 TRUE 
+##  8         885 884,885,886    40503,NA,40503 TRUE 
+##  9         930 929,930,931    40737,NA,40737 TRUE 
+## 10        1000 999,1000,1001  10374,NA,10502 FALSE
+## 11        1089 1088,1089,1090 40134,NA,40134 TRUE 
+## 12        1168 1167,1168,1169 40283,NA,40283 TRUE 
+## 13        1222 1221,1222,1223 40320,NA,40435 FALSE
+## 14        1362 1361,1362,1363 40652,NA,40652 TRUE 
+## 15        1387 1386,1387,1388 40700,NA,40700 TRUE</code></pre>
+<pre class="r"><code>tmp_missing_id %&gt;%
+  subset(!same) %&gt;%
+  select(check_rows) %&gt;%
+  unlist() %&gt;%
+  paste(collapse = &quot;,&quot;) %&gt;%
+  str_split(&quot;,&quot;) %&gt;%
+  unlist() %&gt;%
+  as.numeric %&gt;%
+  slice(rownames_to_column(rv217_raw), ., .preserve = T) %&gt;%
+  select(rowname, ID, draw_date, Notes, visit_code, days.from.1st.pos)</code></pre>
+<pre><code>## # A tibble: 9 x 6
+##   rowname    ID draw_date Notes              visit_code   days.from.1st.pos
+##   &lt;chr&gt;   &lt;int&gt; &lt;chr&gt;     &lt;chr&gt;              &lt;chr&gt;                    &lt;int&gt;
+## 1 518     40257 15-Jun-11 &lt;NA&gt;               17                         439
+## 2 519        NA 1-Aug-12  ARV started 8-1-12 &lt;NA&gt;                       852
+## 3 520     40265 25-Feb-10 &lt;NA&gt;               A                         -265
+## 4 999     10374 21-Feb-12 &lt;NA&gt;               17                         407
+## 5 1000       NA &lt;NA&gt;      died 3-8-12        &lt;NA&gt;                        NA
+## 6 1001    10502 14-Jun-11 &lt;NA&gt;               A                         -448
+## 7 1221    40320 17-Nov-10 &lt;NA&gt;               B                           NA
+## 8 1222       NA &lt;NA&gt;      &lt;NA&gt;               discontinued                NA
+## 9 1223    40435 8-Feb-11  &lt;NA&gt;               A                         -624</code></pre>
+<pre class="r"><code>rv217_raw = rv217_raw %&gt;%
+  mutate(ID = zoo::na.locf(ID))
+  
+
+rv217_raw %&gt;%
+  subset(is.na(ID)) %&gt;%
+  nrow()</code></pre>
+<pre><code>## [1] 0</code></pre>
+</div>
+<div id="variable-types" class="section level2">
+<h2>Variable types</h2>
 <p>Checking types of our important endpoints (viral load and cell counts). Random character string in log10VL</p>
-<pre class="r"><code>rv217 %&gt;%
+<pre class="r"><code>rv217_raw %&gt;%
   select(contains(&quot;VL&quot;), contains(&quot;CD&quot;), contains(&quot;B.&quot;)) %&gt;%
   summarize_all(class) %&gt;%
   gather()</code></pre>
@@ -530,15 +629,16 @@ select(missing_id, contains(&quot;VL&quot;), contains(&quot;CD&quot;), contains(
 ##  8 CD8.    numeric  
 ##  9 B.pct   numeric  
 ## 10 B.      numeric</code></pre>
-<pre class="r"><code>walk(rv217$log10VL, function(i){
-  if(!is.na(i) &amp; is.na(as.numeric(i))) print(i)
-})</code></pre>
+<pre class="r"><code>map(rv217_raw$log10VL, function(i){
+  if(!is.na(i) &amp; is.na(as.numeric(i))) i
+}) %&gt;%
+  flatten_chr()</code></pre>
 <pre><code>## Warning in .f(.x[[i]], ...): NAs introduced by coercion</code></pre>
 <pre><code>## [1] &quot;Aptima Reactive&quot;</code></pre>
-<pre class="r"><code>rv217$log10VL[which(rv217$log10VL == &quot;Aptima Reactive&quot;)] = NA
-rv217$log10VL = as.numeric(rv217$log10VL)
+<pre class="r"><code>rv217_raw$log10VL[which(rv217_raw$log10VL == &quot;Aptima Reactive&quot;)] = NA
+rv217_raw$log10VL = as.numeric(rv217_raw$log10VL)
 
-rv217 %&gt;%
+rv217_raw %&gt;%
   select(contains(&quot;VL&quot;), contains(&quot;CD&quot;), contains(&quot;B.&quot;)) %&gt;%
   summarize_all(class) %&gt;%
   gather()</code></pre>
@@ -556,12 +656,13 @@ rv217 %&gt;%
 ##  9 B.pct   numeric  
 ## 10 B.      numeric</code></pre>
 </div>
+</div>
 <div id="variable-munging" class="section level1">
 <h1>Variable munging</h1>
 <div id="priority-site" class="section level2">
 <h2>Priority, Site</h2>
 <p>There is one unique value per participant. Not sure what prioirty is but site is important so will clean that into Uganda or Thailand unless it is missing.</p>
-<pre class="r"><code>priority_site_dat = rv217 %&gt;% group_by(ID) %&gt;%
+<pre class="r"><code>priority_site_dat = rv217_raw %&gt;% group_by(ID) %&gt;%
   summarize(
     total_priority = n_distinct(na.omit(Priority)),
     priority = paste0(na.omit(Priority), collapse = &quot;&quot;),
@@ -609,7 +710,7 @@ unique(priority_site_dat$site)</code></pre>
 ## 6 41086 &lt;NA&gt; 
 ## 7 41136 &lt;NA&gt; 
 ## 8 41146 &lt;NA&gt;</code></pre>
-<pre class="r"><code>rv217 = rv217 %&gt;%
+<pre class="r"><code>rv217_raw = rv217_raw %&gt;%
   select(-Priority, -Site) %&gt;%
   left_join(select(priority_site_dat, ID, priority, site), by = &quot;ID&quot;) %&gt;%
   select(-visit_code, -Notes, -EIA, -WB, everything()) # moves misc. variables to the end</code></pre>
@@ -617,7 +718,7 @@ unique(priority_site_dat$site)</code></pre>
 <div id="aptima-cleaning" class="section level2">
 <h2>APTIMA cleaning</h2>
 <p>Make a variable that is measurement only truncated at minimum (for R and R/NR), truncated at 0 for NR and left missing for weird inputs</p>
-<pre class="r"><code>aptima_vals = map_chr(rv217$APTIMA, function(i){
+<pre class="r"><code>aptima_vals = map_chr(rv217_raw$APTIMA, function(i){
   if(!is.na(i) &amp; is.na(suppressWarnings(as.numeric(i)))) return(i) else return(NA_character_)
 }) 
 
@@ -625,59 +726,55 @@ aptima_vals %&gt;% unique()</code></pre>
 <pre><code>## [1] NA                      &quot;NR&quot;                    &quot;29,33&quot;                
 ## [4] &quot;25,27&quot;                 &quot;R&quot;                     &quot;R/NR&quot;                 
 ## [7] &quot;IND&quot;                   &quot;no follow up 4 months&quot;</code></pre>
-<pre class="r"><code>rv217 = rv217 %&gt;%
+<pre class="r"><code>rv217_raw = rv217_raw %&gt;%
   mutate(
-    APTIMA_num_temp = suppressWarnings(as.numeric(APTIMA)),
-    APTIMA_num = case_when(
-      APTIMA == &quot;NR&quot; ~ 0,
-      APTIMA %in% c(&quot;R&quot;, &quot;R/NR&quot;) ~ min(APTIMA_num_temp, na.rm = T),
-      TRUE ~ APTIMA_num_temp
-    )
-  ) %&gt;%
-  select(-APTIMA_num_temp)</code></pre>
+    APTIMA_num = suppressWarnings(as.numeric(APTIMA))
+    )</code></pre>
 </div>
 </div>
 <div id="days-variable" class="section level1">
 <h1>days variable</h1>
 <div id="days-variable-error-checking" class="section level2">
 <h2>Days variable error checking</h2>
-<p>There are several cases with missing day variables. Many are due to lack of a date variable in combination with no viral load or cell counts, so we can remove those rows.</p>
-<pre class="r"><code>missing_time_all = rv217 %&gt;%
+<p>There are several cases with missing day variables. Can these be calculated?</p>
+<pre class="r"><code>missing_time_all = rv217_raw %&gt;%
   group_by(ID) %&gt;%
   mutate(
     any_missing_day = any(is.na(days.from.1st.pos))
   ) %&gt;%
   subset(any_missing_day)
 
-# missing times of + VL collection
-vl_missing_time = missing_time_all %&gt;%
+# missing times but has date
+date_missing_time = missing_time_all %&gt;%
   group_by(ID) %&gt;%
   mutate(
-   vl_missing_time = any(is.na(days.from.1st.pos) &amp; !is.na(VL))
+   vl_missing_time = any(is.na(days.from.1st.pos) &amp; !is.na(draw_date))
   ) %&gt;%
   subset(vl_missing_time)
 
-ids_missing_days = unique(vl_missing_time$ID)
+ids_missing_days = unique(date_missing_time$ID)
 
-#missing both (checking if we can just exclude these)
-missing_time_vl = missing_time_all %&gt;%
-  subset(!ID %in% ids_missing_days) %&gt;%
-  select(ID, days.from.1st.pos, draw_date, contains(&quot;VL&quot;), contains(&quot;CD&quot;), contains(&quot;B.&quot;))
-  
-# one weird entry
-missing_time_vl %&gt;%
-  subset(is.na(days.from.1st.pos) &amp; !is.na(draw_date))</code></pre>
-<pre><code>## # A tibble: 1 x 13
-## # Groups:   ID [1]
-##      ID days.from.1st.p… draw_date log10VL    VL VL_site VLunit CD4.pct
-##   &lt;int&gt;            &lt;int&gt; &lt;chr&gt;       &lt;dbl&gt; &lt;int&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;dbl&gt;
-## 1 40491               NA NO SAMPL…      NA    NA &lt;NA&gt;    copie…      NA
-## # … with 5 more variables: CD8.pct &lt;dbl&gt;, CD4. &lt;dbl&gt;, CD8. &lt;dbl&gt;,
-## #   B.pct &lt;dbl&gt;, B. &lt;dbl&gt;</code></pre>
-<pre class="r"><code>clean_vl_missing_time = vl_missing_time %&gt;%
+date_missing_time %&gt;%
+  group_by(ID) %&gt;%
+  summarize(
+    any(days.from.1st.pos == 0)
+    )</code></pre>
+<pre><code>## # A tibble: 5 x 2
+##      ID `any(days.from.1st.pos == 0)`
+##   &lt;int&gt; &lt;lgl&gt;                        
+## 1 40320 NA                           
+## 2 40436 TRUE                         
+## 3 40491 TRUE                         
+## 4 40737 TRUE                         
+## 5 41146 TRUE</code></pre>
+<pre class="r"><code># recode a weird entry
+date_missing_time$draw_date[date_missing_time$draw_date == &quot;NO SAMPLES&quot;] &lt;- NA
+
+clean_vl_missing_time = date_missing_time %&gt;%
   group_by(ID) %&gt;%
   mutate(
-    infection_time = na.omit(draw_date[APTIMA == &quot;R&quot;]),
+    infection_time = if(any(!is.na(days.from.1st.pos))) na.omit(draw_date[days.from.1st.pos == 0]) else{
+                             na.omit(draw_date[APTIMA == &quot;R&quot;])},
     days.from.1st.pos = as.numeric(difftime(as.Date(draw_date, format = &quot;%d-%b-%y&quot;),
                                  as.Date(infection_time, format = &quot;%d-%b-%y&quot;), 
                                  units = &quot;days&quot;))
@@ -686,8 +783,9 @@ missing_time_vl %&gt;%
 </div>
 <div id="days-variable-creation" class="section level2">
 <h2>Days variable creation</h2>
-<pre class="r"><code>rv217 = rv217 %&gt;%
-  subset(!is.na(days.from.1st.pos) &amp; !is.na(draw_date)) %&gt;%
+<pre class="r"><code>nrow(rv217_raw)</code></pre>
+<pre><code>## [1] 1486</code></pre>
+<pre class="r"><code>rv217_raw = rv217_raw %&gt;%
   subset(!ID %in% ids_missing_days) %&gt;% # these are processed separately
   bind_rows(clean_vl_missing_time) %&gt;% # and added back here
   rename(days_dx = days.from.1st.pos) %&gt;%
@@ -697,46 +795,110 @@ missing_time_vl %&gt;%
     days = days_dx - min(days_dx[posVL])
   ) 
 
-any(is.na(rv217$days))</code></pre>
-<pre><code>## [1] FALSE</code></pre>
+nrow(rv217_raw)</code></pre>
+<pre><code>## [1] 1486</code></pre>
+</div>
+</div>
+<div id="arv-and-primary-kinetics" class="section level1">
+<h1>ARV and Primary Kinetics</h1>
+<div id="arv" class="section level2">
+<h2>ARV</h2>
+<p>Defining primary kinetics as first pos VL -&gt; min(first ARV, 365 days).</p>
+<p>All ARV information is in the Notes. There were three cases where the ARV note text date did not match the ARV note date. I found this through manual inspection and denoted them in the outputted sheet.</p>
+<pre class="r"><code>ARV_notes = rv217_raw %&gt;% 
+  subset(str_detect(Notes, &quot;ARV&quot;)) %&gt;%
+  select(ID, draw_date, days, Notes) %&gt;%
+  add_count() %&gt;% 
+  group_by(ID) %&gt;%
+  mutate(first_note_day = min(days)) %&gt;%
+  subset(days == first_note_day) %&gt;%
+  rename(arv_note = Notes) %&gt;%
+  select(ID, draw_date, days, arv_note) %&gt;%
+  mutate(
+    arv_matches_date = !ID %in% c(10742, 10204, 40700),
+    arv_date = case_when(
+      arv_matches_date ~ draw_date,
+      ID == 10742 ~ &quot;12-Mar-14&quot;,
+      ID == 10204 ~ &quot;03-Aug-12&quot;,
+      ID == 40700 ~ &quot;29-Apr-14&quot;,
+      TRUE ~ NA_character_
+      ),
+    adj_time = as.numeric(difftime(as.Date(draw_date, format = &quot;%d-%b-%y&quot;),
+                                 as.Date(arv_date, format = &quot;%d-%b-%y&quot;), 
+                                 units = &quot;days&quot;)),
+    arv_day = days - adj_time
+    )
+
+ARV_notes</code></pre>
+<pre><code>## # A tibble: 25 x 8
+## # Groups:   ID [25]
+##       ID draw_date  days arv_note arv_matches_date arv_date adj_time
+##    &lt;int&gt; &lt;chr&gt;     &lt;dbl&gt; &lt;chr&gt;    &lt;lgl&gt;            &lt;chr&gt;       &lt;dbl&gt;
+##  1 10066 10-Mar-14   906 ARV?     TRUE             10-Mar-…        0
+##  2 10203 27-Mar-13   530 ARV sta… TRUE             27-Mar-…        0
+##  3 10428 15-May-13   846 ARV sta… TRUE             15-May-…        0
+##  4 10435 15-May-12   505 ARV sta… TRUE             15-May-…        0
+##  5 10742 25-Feb-14   251 &quot;ARV st… FALSE            12-Mar-…      -15
+##  6 40061 21-May-10   188 ARV sta… TRUE             21-May-…        0
+##  7 40094 19-Mar-13  1019 ARV sta… TRUE             19-Mar-…        0
+##  8 40100 3-Nov-10    301 ARV STA… TRUE             3-Nov-10        0
+##  9 40168 5-Sep-12    754 ARV sta… TRUE             5-Sep-12        0
+## 10 40250 13-Jul-12   709 ARV sta… TRUE             13-Jul-…        0
+## # … with 15 more rows, and 1 more variable: arv_day &lt;dbl&gt;</code></pre>
+<pre class="r"><code>write_csv(ARV_notes, &quot;ARV_notes.csv&quot;)</code></pre>
+</div>
+<div id="primary-kinetics" class="section level2">
+<h2>Primary kinetics</h2>
+<pre class="r"><code>rv217_raw = ARV_notes %&gt;%
+  select(ID, arv_day) %&gt;%
+  right_join(rv217_raw, by = &quot;ID&quot;) %&gt;%
+  mutate(
+    arv_note = str_detect(Notes, &quot;ARV&quot;),
+    any_arv = any(is.na(arv_day)),
+    primary_kinetics = days &gt;= 0 &amp; days &lt;= 365 &amp; (is.na(arv_day) | days &lt; arv_day)
+  )</code></pre>
 </div>
 </div>
 <div id="finalize" class="section level1">
 <h1>Finalize</h1>
 <p>Order and save</p>
-<pre class="r"><code>names(rv217) = str_remove_all(names(rv217), &quot;\\.&quot;)
-glimpse(rv217)</code></pre>
-<pre><code>## Observations: 1,464
-## Variables: 26
+<pre class="r"><code>names(rv217_raw) = str_remove_all(names(rv217_raw), &quot;\\.&quot;)
+glimpse(rv217_raw)</code></pre>
+<pre><code>## Observations: 1,486
+## Variables: 30
 ## Groups: ID [55]
-## $ ID          &lt;int&gt; 10066, 10066, 10066, 10066, 10066, 10066, 10066, 100…
-## $ draw_date   &lt;chr&gt; &quot;4-Feb-10&quot;, &quot;18-Feb-10&quot;, &quot;22-Jul-10&quot;, &quot;6-Jan-11&quot;, &quot;2…
-## $ days_dx     &lt;dbl&gt; -588, -574, -420, -252, -84, -21, 0, 1, 4, 8, 11, 15…
-## $ APTIMA      &lt;chr&gt; NA, NA, NA, NA, NA, &quot;NR&quot;, &quot;12.38&quot;, &quot;15.12&quot;, &quot;15.54&quot;,…
-## $ log10VL     &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 4.76, 5.83, 6.26, 7.51, …
-## $ VL          &lt;int&gt; NA, NA, NA, NA, NA, NA, NA, 57544, 676083, 1819701, …
-## $ VL_site     &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;,…
-## $ FiebigStage &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, &quot;I-II&quot;, &quot;I-II&quot;, &quot;I-II&quot;, …
-## $ CD4pct      &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 47, NA, NA, NA, 25, NA, …
-## $ CD8pct      &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 25, NA, NA, NA, 59, NA, …
-## $ NKpct       &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 13, NA, NA, NA, 7, NA, N…
-## $ Bpct        &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 13, NA, NA, NA, 8, NA, N…
-## $ CD4         &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 824, NA, NA, NA, 395, NA…
-## $ CD8         &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 442, NA, NA, NA, 925, NA…
-## $ NK          &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 212, NA, NA, NA, 122, NA…
-## $ B           &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 212, NA, NA, NA, 127, NA…
-## $ VLunit      &lt;chr&gt; &quot;copies/mL&quot;, &quot;copies/mL&quot;, &quot;copies/mL&quot;, &quot;copies/mL&quot;, …
-## $ priority    &lt;chr&gt; &quot;Priority 1&quot;, &quot;Priority 1&quot;, &quot;Priority 1&quot;, &quot;Priority …
-## $ site        &lt;chr&gt; &quot;Uganda&quot;, &quot;Uganda&quot;, &quot;Uganda&quot;, &quot;Uganda&quot;, &quot;Uganda&quot;, &quot;U…
-## $ Notes       &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
-## $ visit_code  &lt;chr&gt; &quot;A&quot;, &quot;B&quot;, &quot;D&quot;, &quot;F&quot;, &quot;H&quot;, &quot;SBV&quot;, &quot;SBV&quot;, &quot;1&quot;, &quot;2&quot;, &quot;3&quot;…
-## $ EIA         &lt;chr&gt; &quot;NR&quot;, &quot;NR&quot;, &quot;NR&quot;, &quot;NR&quot;, &quot;NR&quot;, NA, NA, &quot;NR&quot;, NA, &quot;NR&quot;…
-## $ WB          &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, &quot;IND&quot;, &quot;…
-## $ APTIMA_num  &lt;dbl&gt; NA, NA, NA, NA, NA, 0.00, 12.38, 15.12, 15.54, 14.30…
-## $ posVL       &lt;lgl&gt; FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRU…
-## $ days        &lt;dbl&gt; -589, -575, -421, -253, -85, -22, -1, 0, 3, 7, 10, 1…</code></pre>
-<pre class="r"><code>rv217 %&gt;%
-  select(ID, draw_date, days, VL, log10VL, VLunit, posVL, CD4, CD8, NK, B,
+## $ ID               &lt;int&gt; 10066, 10066, 10066, 10066, 10066, 10066, 10066…
+## $ arv_day          &lt;dbl&gt; 906, 906, 906, 906, 906, 906, 906, 906, 906, 90…
+## $ draw_date        &lt;chr&gt; &quot;4-Feb-10&quot;, &quot;18-Feb-10&quot;, &quot;22-Jul-10&quot;, &quot;6-Jan-11…
+## $ days_dx          &lt;dbl&gt; -588, -574, -420, -252, -84, -21, 0, 1, 4, 8, 1…
+## $ APTIMA           &lt;chr&gt; NA, NA, NA, NA, NA, &quot;NR&quot;, &quot;12.38&quot;, &quot;15.12&quot;, &quot;15…
+## $ log10VL          &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 4.76, 5.83, 6.26, 7…
+## $ VL               &lt;int&gt; NA, NA, NA, NA, NA, NA, NA, 57544, 676083, 1819…
+## $ VL_site          &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;,…
+## $ FiebigStage      &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, &quot;I-II&quot;, &quot;I-II&quot;, &quot;I-…
+## $ CD4pct           &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 47, NA, NA, NA, 25,…
+## $ CD8pct           &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 25, NA, NA, NA, 59,…
+## $ NKpct            &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 13, NA, NA, NA, 7, …
+## $ Bpct             &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 13, NA, NA, NA, 8, …
+## $ CD4              &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 824, NA, NA, NA, 39…
+## $ CD8              &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 442, NA, NA, NA, 92…
+## $ NK               &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 212, NA, NA, NA, 12…
+## $ B                &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 212, NA, NA, NA, 12…
+## $ VLunit           &lt;chr&gt; &quot;copies/mL&quot;, &quot;copies/mL&quot;, &quot;copies/mL&quot;, &quot;copies/…
+## $ priority         &lt;chr&gt; &quot;Priority 1&quot;, &quot;Priority 1&quot;, &quot;Priority 1&quot;, &quot;Prio…
+## $ site             &lt;chr&gt; &quot;Uganda&quot;, &quot;Uganda&quot;, &quot;Uganda&quot;, &quot;Uganda&quot;, &quot;Uganda…
+## $ Notes            &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,…
+## $ visit_code       &lt;chr&gt; &quot;A&quot;, &quot;B&quot;, &quot;D&quot;, &quot;F&quot;, &quot;H&quot;, &quot;SBV&quot;, &quot;SBV&quot;, &quot;1&quot;, &quot;2&quot;…
+## $ EIA              &lt;chr&gt; &quot;NR&quot;, &quot;NR&quot;, &quot;NR&quot;, &quot;NR&quot;, &quot;NR&quot;, NA, NA, &quot;NR&quot;, NA,…
+## $ WB               &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, &quot;IN…
+## $ APTIMA_num       &lt;dbl&gt; NA, NA, NA, NA, NA, NA, 12.38, 15.12, 15.54, 14…
+## $ posVL            &lt;lgl&gt; FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE…
+## $ days             &lt;dbl&gt; -589, -575, -421, -253, -85, -22, -1, 0, 3, 7, …
+## $ arv_note         &lt;lgl&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,…
+## $ any_arv          &lt;lgl&gt; FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE…
+## $ primary_kinetics &lt;lgl&gt; FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE…</code></pre>
+<pre class="r"><code>rv217_raw %&gt;%
+  select(ID, draw_date, days, VL, log10VL, VLunit, posVL, primary_kinetics, CD4, CD8, NK, B,
          APTIMA, APTIMA_num, days_dx, contains(&quot;pct&quot;), everything()) %&gt;%
   write_csv(&quot;../../data/RV217Clean.csv&quot;)</code></pre>
 </div>

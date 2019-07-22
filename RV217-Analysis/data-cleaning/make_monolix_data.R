@@ -1,7 +1,7 @@
 library(tidyverse)
 
 tmp = read_csv("../../data/RV217Clean.csv") %>%
-  subset(!is.na(log10VL) & days >= 0) %>%
+  subset(!is.na(log10VL) & primary_kinetics) %>%
   group_by(ID) %>%
   mutate(total = n()) %>%
   subset(total > 2) 
@@ -23,4 +23,11 @@ tmp %>%
   write_csv("../../data/RV217MonoCells.csv")
 
 
+## compare to Dan's data
+dan_data = read_csv("../../Monolix/Data/DBRout_RV217.csv")
+test = tmp %>%
+  subset(days_dx <= 100) %>%
+  select(ID, days_dx, log10VL) %>%
+  left_join(dan_data, by = c("ID", "days_dx" = "days"))
 
+#all(test$log10VL.x == test$log10VL.y, na.rm = T)

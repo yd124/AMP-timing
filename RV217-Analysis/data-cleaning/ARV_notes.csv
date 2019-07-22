@@ -1,0 +1,26 @@
+ID,draw_date,days,arv_note,arv_matches_date,arv_date,adj_time,arv_day
+10066,10-Mar-14,906,ARV?,TRUE,10-Mar-14,0,906
+10203,27-Mar-13,530,ARV started March 2013,TRUE,27-Mar-13,0,530
+10428,15-May-13,846,ARV started 15 May 2013,TRUE,15-May-13,0,846
+10435,15-May-12,505,ARV started mid-May 2012,TRUE,15-May-12,0,505
+10742,25-Feb-14,251,ARV started 12-Mar-14 ,FALSE,12-Mar-14,-15,266
+40061,21-May-10,188,ARV started 21-May-10,TRUE,21-May-10,0,188
+40094,19-Mar-13,1019,ARV started 3/19/13,TRUE,19-Mar-13,0,1019
+40100,3-Nov-10,301,ARV STARTED 11/3/10,TRUE,3-Nov-10,0,301
+40168,5-Sep-12,754,ARV started 05-Sep-12,TRUE,5-Sep-12,0,754
+40250,13-Jul-12,709,ARV started 7-13-12,TRUE,13-Jul-12,0,709
+40257,1-Aug-12,848,ARV started 8-1-12,TRUE,1-Aug-12,0,848
+40353,27-May-15,1664,ARV Started 27-May-2015,TRUE,27-May-15,0,1664
+40363,2-May-13,793,started on TB drugs 03-Apr-13 and ARVs 02-May-13,TRUE,2-May-13,0,793
+40577,24-Jul-14,965,ARV started 7/24/14,TRUE,24-Jul-14,0,965
+10753,16-May-13,41,ARV started 5-16-13,TRUE,16-May-13,0,41
+40503,28-Nov-14,1262,ARV started 28-Nov-14,TRUE,28-Nov-14,0,1262
+10204,31-Jul-12,867,ARV started 03 Aug 2012,FALSE,03-Aug-12,-3,870
+40134,24-Sep-14,1721,ARV started 24-Sep-14,TRUE,24-Sep-14,0,1721
+40283,6-Nov-12,481,ARV started 06-Nov-12,TRUE,6-Nov-12,0,481
+40492,13-Nov-13,345,"Info from site says ARVs started 13-Dec--13, but looks like earlier",TRUE,13-Nov-13,0,345
+40652,11-Jun-14,503,ARV started 11-Jun-14,TRUE,11-Jun-14,0,503
+40700,15-May-14,267,Started ARV 29-Apr-14 but then stopped on 20 May 14?,FALSE,29-Apr-14,16,251
+40814,17-Jul-14,31,ARV started 7/17/14,TRUE,17-Jul-14,0,31
+40436,1-Apr-15,1412,ARV started 01-Apr-15,TRUE,1-Apr-15,0,1412
+40737,1-Apr-15,579,ARV started Apr-15,TRUE,1-Apr-15,0,579
