@@ -83,6 +83,10 @@ rv217 = read_csv("../data/RV217Clean.csv") %>%
 ## coercion
 ```
 
+# When was APTIMA measured
+
+
+
 # APTIMA vs. VL
 
 Moderate correlation using any viral load but very highly correlated using first positive or dx only. When taking the ratio of the measures, they are almost perfectly correlated specifically at first positive viral load.
@@ -192,10 +196,9 @@ rv217_firstpos %>%
   spread(APTIMA_time, APTIMA_value) %>%
   ggplot(aes(x = firstVL, y = APTIMA_firstVL, colour = site)) +
   scale_x_log10("First pos. VL") +
-  scale_y_log10("APTIMA value") +
+  scale_y_log10("APTIMA value at first pos. VL") +
   geom_point() +
   theme(
-    axis.title.y = element_blank(),
     strip.placement = "outside",
     strip.background = element_blank(),
     strip.text = element_text(size = 12)

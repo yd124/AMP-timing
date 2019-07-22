@@ -11,7 +11,7 @@ output:
 
 
 
-The following script cleans and tidies the raw data. 
+The following script cleans and tidies the raw RV217 data. It also cleans and saves supplementary table 4 from the paper at the end. 
 
 **Some notes:**
 
@@ -47,7 +47,7 @@ library(tidyverse)
 ```
 
 ```
-## ── Attaching packages ──────────────────────────────────────────────────────── tidyverse 1.2.1 ──
+## ── Attaching packages ────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
 ```
 
 ```
@@ -58,7 +58,7 @@ library(tidyverse)
 ```
 
 ```
-## ── Conflicts ─────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ── Conflicts ───────────────────────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()
 ```
@@ -82,7 +82,7 @@ library(kableExtra)
 fix_names = function(x){
   #this loads the header exactly
   suppressMessages({
-    x = read_csv("../data/RV217Master.csv", n_max = 0) %>%
+    x = read_csv("../../data/RV217Master.csv", n_max = 0) %>%
       names()
     })    
   
@@ -94,7 +94,7 @@ fix_names = function(x){
 
 
 # read.csv loads the data than read_csv
-rv217 = read.csv("../data/RV217Master.csv", stringsAsFactors = F,
+rv217 = read.csv("../../data/RV217Master.csv", stringsAsFactors = F,
                  na.strings = "") %>%
   as_tibble(.name_repair = fix_names) %>%
   #using Dan's naming conventions
@@ -490,5 +490,5 @@ glimpse(rv217)
 rv217 %>%
   select(ID, draw_date, days, VL, log10VL, VLunit, posVL, CD4, CD8, NK, B,
          APTIMA, APTIMA_num, days_dx, contains("pct"), everything()) %>%
-  write_csv("../data/RV217Clean.csv")
+  write_csv("../../data/RV217Clean.csv")
 ```
