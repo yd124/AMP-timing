@@ -1,0 +1,151 @@
+---
+title: "RV217 - Reproducility"
+author: "Bryan Mayer"
+date: "7/10/2019"
+output: 
+  html_document:
+    keep_md: true
+    toc: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Setup
+
+```{r load-data}
+
+# this has more sensible rounding rules than 0 regarding .xxx5's
+round_away_0 = function (x, digits = 0, trailing_zeros = FALSE) 
+{
+    rounded_vals <- sign(x) * round(abs(x) + 1e-15, digits)
+    if (trailing_zeros) {
+        rounded_vals[!is.na(rounded_vals)] <- formatC(rounded_vals[!is.na(rounded_vals)], 
+            digits, format = "f")
+        neg_to_change <- paste0("-0.", paste0(rep(0, digits), 
+            collapse = ""))
+        if (any(rounded_vals == neg_to_change, na.rm = TRUE)) 
+            rounded_vals[rounded_vals == neg_to_change] <- substr(neg_to_change, 
+                2, nchar(neg_to_change))
+    }
+    rounded_vals
+}
+
+library(tidyverse)
+library(kableExtra)
+theme_set(theme_bw())
+
+# num2  keeps APTIMA missing when it didnt have a value 
+
+rv217 = read_csv("../../data/RV217Clean.csv") %>%
+  mutate(APTIMA_num2 = case_when(
+    APTIMA_num == as.numeric(APTIMA) ~ APTIMA_num,
+    TRUE ~ NA_real_
+  ))
+
+
+tableS4 = read_csv("../../data/RV217TableS4.csv")
+
+tableS4 %>% group_by(region) %>%
+  summarize(total = n()) %>%
+  kable()
+
+```
+
+
+# Overview
+
+Repeating results from Robb et al. 2016. We have only received a partial amount of the data (not all of the African data) but should have all of the thai data. 
+
+**This will focus on just the thai data then.**
+
+- Comparing calculated data to supplemental table
+- Reproducing their results
+  - Estimating upslope, downslope, set point
+  - Repeating correlations
+
+
+# Comparing calculated peak and set point to Table S4
+
+## Calculating and merging using peak VL
+
+Is peak log10 VL and day enough for identification from the table?
+Was able to match all 17 Thailand table entries by viral load
+
+
+```{r peak-merge}
+
+any(duplicated(select(tableS4, peak_vl, peak_day)))
+
+peak_rv217 = rv217 %>%
+  subset(!is.na(log10VL) & days_dx >= 0 & (site != "Uganda" | is.na(site)) &
+           days_dx <= 365) %>%
+  group_by(ID, site) %>%
+  summarize(
+    peak_vl = max(log10VL, na.rm = T),
+    peak_day = days_dx[which.max(log10VL)],
+    set_point_log = mean(log10VL[days_dx > 42 & days_dx <= 365], na.rm = T),
+    log_set_point = log10(mean(VL[days_dx > 42 & days_dx <= 365], na.rm = T)),
+    any_exact_days = any(days_dx == 42 | days_dx == 365),
+    exact_42 = any(days_dx == 42),
+    exact_365 = any(days_dx == 365)
+  ) %>%
+  mutate_if(is.numeric, round_away_0, digits = 2)
+
+test_peakvl_merge = select(tableS4, peak_vl, peak_day, region, set_point_vl) %>%
+  subset(region == "Thailand") %>%
+  full_join(peak_rv217, by = c("peak_vl")) 
+
+# all matched!
+matched_peak = test_peakvl_merge %>%
+  subset(!is.na(site) & !is.na(region))
+
+# peak day checks out
+with(matched_peak, all(peak_day.x == peak_day.y))
+
+```
+
+
+## Investigating set point
+
+Peak day matched. Through some investigation, set point was calculated using the geometric mean on the interval: (42, 365), although there were no exact matches at 365 among the Thai data. There were 3 unmatched. 
+
+```{r set-point-check}
+
+with(matched_peak, all(set_point_vl == log_set_point))
+unmatched_setpt = subset(matched_peak, set_point_vl != set_point_log) %>%
+  select(ID, set_point_vl, set_point_log)
+
+unmatched_setpt
+
+```
+
+```{r setpt-invest}
+
+rv217 %>%
+  subset(ID %in% unmatched_setpt$ID & days_dx < 365) %>%
+  ggplot(aes(x = days_dx, y = log10VL)) +
+  geom_point() + 
+  geom_line() +
+  facet_wrap(~ID)
+
+```
+
+There is ARV in these participants within the first year (it is in the Notes in the Master dataset). That explains two of the mismatches. The third is not documented but the final value before one year was not included in the calculation.
+
+```{r}
+tibble(
+  ID = as.numeric(c(40061, 40100, 40577)),
+  setpt_recalc = c(
+     mean(subset(rv217, ID == "40061" & days > 42 & days < 189)$log10VL, na.rm = T),
+    mean(subset(rv217, ID == "40100" & days > 42 & days < 303)$log10VL),
+    mean(subset(rv217, ID == "40577" & days > 42 & days < 365)$log10VL[-1])
+  )
+) %>%
+  right_join(unmatched_setpt)
+
+```
+
+
