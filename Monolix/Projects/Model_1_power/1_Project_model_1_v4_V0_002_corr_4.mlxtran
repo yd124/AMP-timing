@@ -1,0 +1,80 @@
+<DATAFILE>
+
+[FILEINFO]
+file = '../../../data/RV217Mono.csv'
+delimiter = comma
+header = {ID, days, log10VL}
+
+[CONTENT]
+ID = {use=identifier}
+days = {use=time}
+log10VL = {use=observation, name=log10VL, type=continuous}
+
+<MODEL>
+
+[INDIVIDUAL]
+input = {initT_pop, aS_pop, dS_pop, omega_dS, tau_pop, lBt0_pop, omega_lBt0, dI_pop, omega_initT, lp_pop, V0_pop, n_pop, omega_n, omega_dI, corr_lBt0_dS, omega_aS, corr_dI_aS, corr_n_aS, corr_n_dI}
+
+DEFINITION:
+initT = {distribution=normal, typical=initT_pop, sd=omega_initT}
+aS = {distribution=logNormal, typical=aS_pop, sd=omega_aS}
+dS = {distribution=logNormal, typical=dS_pop, sd=omega_dS}
+tau = {distribution=logNormal, typical=tau_pop, no-variability}
+lBt0 = {distribution=normal, typical=lBt0_pop, sd=omega_lBt0}
+dI = {distribution=logNormal, typical=dI_pop, sd=omega_dI}
+lp = {distribution=normal, typical=lp_pop, no-variability}
+V0 = {distribution=logNormal, typical=V0_pop, no-variability}
+n = {distribution=logNormal, typical=n_pop, sd=omega_n}
+correlation = {level=id, r(lBt0, dS)=corr_lBt0_dS, r(dI, aS)=corr_dI_aS, r(n, aS)=corr_n_aS, r(n, dI)=corr_n_dI}
+
+[LONGITUDINAL]
+input = {a}
+
+file = '../../Models/Ref_model_1.4_V0.txt'
+
+DEFINITION:
+log10VL = {distribution=normal, prediction=Vout, errorModel=constant(a)}
+
+<FIT>
+data = log10VL
+model = log10VL
+
+<PARAMETER>
+V0_pop = {value=0.02, method=FIXED}
+a = {value=0.333504, method=MLE}
+aS_pop = {value=0.893225, method=MLE}
+corr_dI_aS = {value=0.964631, method=MLE}
+corr_lBt0_dS = {value=0.996858, method=MLE}
+corr_n_aS = {value=-0.958442, method=MLE}
+corr_n_dI = {value=-0.849341, method=MLE}
+dI_pop = {value=1.57001, method=MLE}
+dS_pop = {value=0.000984091, method=MLE}
+initT_pop = {value=-15.6684, method=MLE}
+lBt0_pop = {value=-4.51123, method=MLE}
+lp_pop = {value=4.6, method=FIXED}
+n_pop = {value=0.0850774, method=MLE}
+omega_aS = {value=0.348985, method=MLE}
+omega_dI = {value=0.618287, method=MLE}
+omega_dS = {value=1.48362, method=MLE}
+omega_initT = {value=8.72564, method=MLE}
+omega_lBt0 = {value=0.623245, method=MLE}
+omega_n = {value=0.675584, method=MLE}
+tau_pop = {value=0.05, method=FIXED}
+
+<MONOLIX>
+
+[TASKS]
+populationParameters()
+individualParameters(method = {conditionalMean, conditionalMode })
+fim(method = Linearization)
+logLikelihood(method = Linearization)
+plotResult(method = {outputplot, indfits, obspred, parameterdistribution, covariatemodeldiagnosis, randomeffects, covariancemodeldiagnosis, saemresults })
+
+[SETTINGS]
+GLOBAL:
+exportpath = '1_Project_model_1_v4_V0_002_corr_4'
+
+POPULATION:
+smoothingiterations = 300
+exploratoryiterations = 1000
+
