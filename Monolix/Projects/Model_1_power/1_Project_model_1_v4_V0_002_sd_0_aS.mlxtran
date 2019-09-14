@@ -39,12 +39,12 @@ data = log10VL
 model = log10VL
 
 <PARAMETER>
-V0_pop = {value=0.02, method=FIXED}
+V0_pop = {value=1, method=FIXED}
 a = {value=0.325667, method=MLE}
 aS_pop = {value=1.40973, method=MLE}
 dI_pop = {value=2.37123, method=MLE}
 dS_pop = {value=0.000754419, method=MLE}
-initT_pop = {value=-9.6362, method=MLE}
+initT_pop = {value=-9.636200000000001, method=MLE}
 lBt0_pop = {value=-4.59827, method=MLE}
 lp_pop = {value=4.6, method=FIXED}
 n_pop = {value=0.0969926, method=MLE}
@@ -69,8 +69,10 @@ GLOBAL:
 exportpath = '1_Project_model_1_v4_V0_002_sd_0_aS'
 
 POPULATION:
-exploratoryautostop = no
-smoothingautostop = no
-smoothingiterations = 300
-exploratoryiterations = 800
+burningiterations = 200
+smoothingiterations = 500
+exploratoryiterations = 1000
+exploratoryalpha = 0.1
+smoothingalpha = 0.1
+exploratoryinterval = 500
 

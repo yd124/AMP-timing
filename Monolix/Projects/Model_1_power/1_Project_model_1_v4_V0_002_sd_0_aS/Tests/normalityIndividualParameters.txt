@@ -1,6 +1,6 @@
 parameter,statistic,p-value,test
-initT,0.970058,0.298876,Shapiro-Wilk
-dS,0.972824,0.475228,Shapiro-Wilk
-lBt0,0.981204,0.887347,Shapiro-Wilk
-dI,0.968533,0.235788,Shapiro-Wilk
-n,0.974814,0.553601,Shapiro-Wilk
+initT,0.977159,0.655347,Shapiro-Wilk
+dS,0.976312,0.692766,Shapiro-Wilk
+lBt0,0.977126,0.686527,Shapiro-Wilk
+dI,0.965487,0.093869,Shapiro-Wilk
+n,0.97932,0.874929,Shapiro-Wilk
