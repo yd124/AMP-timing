@@ -1,17 +1,21 @@
 library(tidyverse)
 
+exclude_ids = c("10502", "40640", "41002")
+
 tmp = read_csv("../../data/RV217Clean.csv") %>%
   subset(!is.na(log10VL) & primary_kinetics) %>%
   group_by(ID) %>%
   mutate(total = n()) %>%
-  subset(total > 2) 
+  subset(total > 2)
 
 tmp %>%
   select(ID, days, log10VL) %>%
+  subset(!ID %in% exclude_ids) %>%
   write_csv("../../data/RV217Mono.csv")
-  
+
 tmp %>%
   select(ID, days, log10VL, CD4, CD8) %>%
+  subset(!ID %in% exclude_ids) %>%
   gather(ytype_def, y, log10VL, CD4, CD8) %>%
   mutate(
     ytype = case_when(
