@@ -12,7 +12,7 @@ p = 10^(lp)
 
 
 ;initial conditions
-t_0 = initT 	;first positive time [days]
+t_0 = -initT 	;first positive time [days]
 
 S_0 = aS/dS	;assumes no real T cell depletion in very early infection
 V_0 = V0/1e3         	;viral load at 30 copies/mL detection limit

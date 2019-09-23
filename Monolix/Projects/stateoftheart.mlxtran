@@ -1,0 +1,78 @@
+<DATAFILE>
+
+[FILEINFO]
+file = '../../data/RV217Mono.csv'
+delimiter = comma
+header = {ID, days, log10VL}
+
+[CONTENT]
+ID = {use=identifier}
+days = {use=time}
+log10VL = {use=observation, name=log10VL, type=continuous}
+
+<MODEL>
+
+[INDIVIDUAL]
+input = {initT_pop, aS_pop, dS_pop, omega_dS, tau_pop, lBt0_pop, omega_lBt0, dI_pop, omega_initT, lp_pop, V0_pop, n_pop, omega_n, omega_dI}
+
+DEFINITION:
+initT = {distribution=normal, typical=initT_pop, sd=omega_initT}
+aS = {distribution=logNormal, typical=aS_pop, no-variability}
+dS = {distribution=logNormal, typical=dS_pop, sd=omega_dS}
+tau = {distribution=logNormal, typical=tau_pop, no-variability}
+lBt0 = {distribution=normal, typical=lBt0_pop, sd=omega_lBt0}
+dI = {distribution=logNormal, typical=dI_pop, sd=omega_dI}
+lp = {distribution=normal, typical=lp_pop, no-variability}
+V0 = {distribution=logNormal, typical=V0_pop, no-variability}
+n = {distribution=logNormal, typical=n_pop, sd=omega_n}
+
+[LONGITUDINAL]
+input = {a}
+
+file = '../Models/Ref_model_1.4_V0.txt'
+
+DEFINITION:
+log10VL = {distribution=normal, prediction=Vout, errorModel=constant(a)}
+
+<FIT>
+data = log10VL
+model = log10VL
+
+<PARAMETER>
+V0_pop = {value=1, method=FIXED}
+a = {value=0.325667, method=MLE}
+aS_pop = {value=1.40973, method=MLE}
+dI_pop = {value=2.37123, method=MLE}
+dS_pop = {value=0.000754419, method=MLE}
+initT_pop = {value=-9.636200000000001, method=MLE}
+lBt0_pop = {value=-4.59827, method=MLE}
+lp_pop = {value=4.6, method=FIXED}
+n_pop = {value=0.0969926, method=MLE}
+omega_dI = {value=0.738912, method=MLE}
+omega_dS = {value=0.997534, method=MLE}
+omega_initT = {value=2.80326, method=MLE}
+omega_lBt0 = {value=0.4554, method=MLE}
+omega_n = {value=0.673736, method=MLE}
+tau_pop = {value=0.05, method=FIXED}
+
+<MONOLIX>
+
+[TASKS]
+populationParameters()
+individualParameters(method = {conditionalMean, conditionalMode })
+fim(method = Linearization)
+logLikelihood(method = Linearization)
+plotResult(method = {outputplot, indfits, obspred, parameterdistribution, covariatemodeldiagnosis, randomeffects, covariancemodeldiagnosis, saemresults })
+
+[SETTINGS]
+GLOBAL:
+exportpath = 'stateoftheart'
+
+POPULATION:
+burningiterations = 200
+smoothingiterations = 500
+exploratoryiterations = 1000
+exploratoryalpha = 0.1
+smoothingalpha = 0.1
+exploratoryinterval = 500
+
