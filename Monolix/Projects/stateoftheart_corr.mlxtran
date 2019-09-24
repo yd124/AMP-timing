@@ -13,7 +13,7 @@ log10VL = {use=observation, name=log10VL, type=continuous}
 <MODEL>
 
 [INDIVIDUAL]
-input = {initT_pop, aS_pop, dS_pop, omega_dS, tau_pop, lBt0_pop, omega_lBt0, dI_pop, omega_initT, lp_pop, V0_pop, n_pop, omega_n, omega_dI, omega_aS}
+input = {initT_pop, aS_pop, dS_pop, omega_dS, tau_pop, lBt0_pop, omega_lBt0, dI_pop, omega_initT, lp_pop, V0_pop, n_pop, omega_n, omega_dI, omega_aS, corr_dS_aS, corr_lBt0_aS, corr_lBt0_dS}
 
 DEFINITION:
 initT = {distribution=logNormal, typical=initT_pop, sd=omega_initT}
@@ -25,6 +25,7 @@ dI = {distribution=logNormal, typical=dI_pop, sd=omega_dI}
 lp = {distribution=normal, typical=lp_pop, no-variability}
 V0 = {distribution=logNormal, typical=V0_pop, no-variability}
 n = {distribution=logNormal, typical=n_pop, sd=omega_n}
+correlation = {level=id, r(dS, aS)=corr_dS_aS, r(lBt0, aS)=corr_lBt0_aS, r(lBt0, dS)=corr_lBt0_dS}
 
 [LONGITUDINAL]
 input = {a}
@@ -40,20 +41,23 @@ model = log10VL
 
 <PARAMETER>
 V0_pop = {value=1, method=FIXED}
-a = {value=0.3300827672483905, method=MLE}
-aS_pop = {value=0.5208358770821264, method=MLE}
-dI_pop = {value=0.4347420449743871, method=MLE}
-dS_pop = {value=0.0004947379069803, method=MLE}
-initT_pop = {value=8.181691433616681, method=MLE}
-lBt0_pop = {value=-4.239830247449294, method=MLE}
+a = {value=0.3210981252998741, method=MLE}
+aS_pop = {value=1.008092078082654, method=MLE}
+corr_dS_aS = {value=0.5458434372642849, method=MLE}
+corr_lBt0_aS = {value=-0.1631313163141128, method=MLE}
+corr_lBt0_dS = {value=0.7357998176070479, method=MLE}
+dI_pop = {value=0.8766569005305783, method=MLE}
+dS_pop = {value=0.0006662693411859, method=MLE}
+initT_pop = {value=8.593931256132688, method=MLE}
+lBt0_pop = {value=-4.49884450867836, method=MLE}
 lp_pop = {value=3, method=FIXED}
-n_pop = {value=0.1648959064857182, method=MLE}
-omega_aS = {value=1.105660228834645, method=MLE}
-omega_dI = {value=0.3517577918846536, method=MLE}
-omega_dS = {value=1.199740666580405, method=MLE}
-omega_initT = {value=0.7807041427964398, method=MLE}
-omega_lBt0 = {value=0.7112586839018438, method=MLE}
-omega_n = {value=0.0230322549286002, method=MLE}
+n_pop = {value=0.1069995344646023, method=MLE}
+omega_aS = {value=1.284925426751096, method=MLE}
+omega_dI = {value=0.1080986375371066, method=MLE}
+omega_dS = {value=1.840419194690566, method=MLE}
+omega_initT = {value=0.800923757891564, method=MLE}
+omega_lBt0 = {value=0.6273566831714072, method=MLE}
+omega_n = {value=0.3296086521395831, method=MLE}
 tau_pop = {value=1, method=FIXED}
 
 <MONOLIX>
@@ -67,7 +71,7 @@ plotResult(method = {outputplot, indfits, obspred, parameterdistribution, covari
 
 [SETTINGS]
 GLOBAL:
-exportpath = 'stateoftheart'
+exportpath = 'stateoftheart_corr'
 
 POPULATION:
 burniniterations = 20

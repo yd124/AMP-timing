@@ -1,7 +1,7 @@
 <DATAFILE>
 
 [FILEINFO]
-file = '../../data/RV217Mono.csv'
+file = '../../../../data/RV217Mono.csv'
 delimiter = comma
 header = {ID, days, log10VL}
 
@@ -13,7 +13,7 @@ log10VL = {use=observation, name=log10VL, type=continuous}
 <MODEL>
 
 [INDIVIDUAL]
-input = {initT_pop, aS_pop, dS_pop, omega_dS, tau_pop, lBt0_pop, omega_lBt0, dI_pop, omega_initT, lp_pop, V0_pop, n_pop, omega_n, omega_dI, omega_aS}
+input = {initT_pop, aS_pop, dS_pop, omega_dS, tau_pop, lBt0_pop, omega_lBt0, dI_pop, omega_initT, lp_pop, V0_pop, n_pop, omega_n, omega_dI, omega_aS, corr_lBt0_dS, corr_n_aS}
 
 DEFINITION:
 initT = {distribution=logNormal, typical=initT_pop, sd=omega_initT}
@@ -25,11 +25,12 @@ dI = {distribution=logNormal, typical=dI_pop, sd=omega_dI}
 lp = {distribution=normal, typical=lp_pop, no-variability}
 V0 = {distribution=logNormal, typical=V0_pop, no-variability}
 n = {distribution=logNormal, typical=n_pop, sd=omega_n}
+correlation = {level=id, r(lBt0, dS)=corr_lBt0_dS, r(n, aS)=corr_n_aS}
 
 [LONGITUDINAL]
 input = {a}
 
-file = '../Models/Ref_model_1.4_V0.txt'
+file = '../../../Models/Ref_model_1.4_V0.txt'
 
 DEFINITION:
 log10VL = {distribution=normal, prediction=Vout, errorModel=constant(a)}
@@ -40,20 +41,22 @@ model = log10VL
 
 <PARAMETER>
 V0_pop = {value=1, method=FIXED}
-a = {value=0.3300827672483905, method=MLE}
-aS_pop = {value=0.5208358770821264, method=MLE}
-dI_pop = {value=0.4347420449743871, method=MLE}
-dS_pop = {value=0.0004947379069803, method=MLE}
-initT_pop = {value=8.181691433616681, method=MLE}
-lBt0_pop = {value=-4.239830247449294, method=MLE}
+a = {value=0.3343888569044741, method=MLE}
+aS_pop = {value=0.7312123678880111, method=MLE}
+corr_lBt0_dS = {value=0.9987245088258682, method=MLE}
+corr_n_aS = {value=-0.9757844477229268, method=MLE}
+dI_pop = {value=0.6125465134494325, method=MLE}
+dS_pop = {value=0.0005604387837438, method=MLE}
+initT_pop = {value=9.455339084293747, method=MLE}
+lBt0_pop = {value=-4.464171473162878, method=MLE}
 lp_pop = {value=3, method=FIXED}
-n_pop = {value=0.1648959064857182, method=MLE}
-omega_aS = {value=1.105660228834645, method=MLE}
-omega_dI = {value=0.3517577918846536, method=MLE}
-omega_dS = {value=1.199740666580405, method=MLE}
-omega_initT = {value=0.7807041427964398, method=MLE}
-omega_lBt0 = {value=0.7112586839018438, method=MLE}
-omega_n = {value=0.0230322549286002, method=MLE}
+n_pop = {value=0.1248381659717268, method=MLE}
+omega_aS = {value=0.2033764135544585, method=MLE}
+omega_dI = {value=0.7422463142138868, method=MLE}
+omega_dS = {value=1.356998806192276, method=MLE}
+omega_initT = {value=0.8386638904939024, method=MLE}
+omega_lBt0 = {value=0.5603740373516523, method=MLE}
+omega_n = {value=0.6579802481888674, method=MLE}
 tau_pop = {value=1, method=FIXED}
 
 <MONOLIX>
@@ -67,7 +70,7 @@ plotResult(method = {outputplot, indfits, obspred, parameterdistribution, covari
 
 [SETTINGS]
 GLOBAL:
-exportpath = 'stateoftheart'
+exportpath = '../'
 
 POPULATION:
 burniniterations = 20

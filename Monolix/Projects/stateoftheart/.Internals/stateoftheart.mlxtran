@@ -1,7 +1,7 @@
 <DATAFILE>
 
 [FILEINFO]
-file = '../../data/RV217Mono.csv'
+file = '../../../../data/RV217Mono.csv'
 delimiter = comma
 header = {ID, days, log10VL}
 
@@ -29,7 +29,7 @@ n = {distribution=logNormal, typical=n_pop, sd=omega_n}
 [LONGITUDINAL]
 input = {a}
 
-file = '../Models/Ref_model_1.4_V0.txt'
+file = '../../../Models/Ref_model_1.4_V0.txt'
 
 DEFINITION:
 log10VL = {distribution=normal, prediction=Vout, errorModel=constant(a)}
@@ -67,7 +67,7 @@ plotResult(method = {outputplot, indfits, obspred, parameterdistribution, covari
 
 [SETTINGS]
 GLOBAL:
-exportpath = 'stateoftheart'
+exportpath = '../'
 
 POPULATION:
 burniniterations = 20
