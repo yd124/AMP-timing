@@ -1,13 +1,12 @@
 ---
 title: "RV217 - Data Cleaning"
 author: "Bryan Mayer"
-date: "7/22/2019"
+date: "9/27/2019"
 output: 
   html_document:
     keep_md: true
     toc: true
 ---
-
 
 
 
@@ -18,7 +17,7 @@ The following script cleans and tidies the raw RV217 data.
   - `days` was recalculated to be from the time of the first positive viral load. 
     - Original days variable is now called `days_dx` for days from diagnosis (APTIMA  detection).
   - Used Dan's variable name conventions so our datasets have similar headers
-  - No long removing missing IDs, updated processing to handle this better
+  - Rows in the raw data with missing IDs are processed to be included
   - Added a variable for arv. arv day is relative to first positive viral load.
 
 **Some issues:**
@@ -37,26 +36,18 @@ library(tidyverse)
 ```
 
 ```
-## Registered S3 methods overwritten by 'ggplot2':
-##   method         from 
-##   [.quosures     rlang
-##   c.quosures     rlang
-##   print.quosures rlang
+## ── Attaching packages ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
 ```
 
 ```
-## ── Attaching packages ─────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
-```
-
-```
-## ✔ ggplot2 3.1.1     ✔ purrr   0.3.2
-## ✔ tibble  2.1.3     ✔ dplyr   0.8.1
-## ✔ tidyr   0.8.3     ✔ stringr 1.4.0
+## ✔ ggplot2 3.2.1     ✔ purrr   0.3.2
+## ✔ tibble  2.1.3     ✔ dplyr   0.8.3
+## ✔ tidyr   1.0.0     ✔ stringr 1.4.0
 ## ✔ readr   1.3.1     ✔ forcats 0.4.0
 ```
 
 ```
-## ── Conflicts ────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ── Conflicts ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()
 ```
@@ -77,6 +68,10 @@ library(kableExtra)
 ```
 
 ```r
+theme_set(theme_bw())
+
+save_data = F
+
 fix_names = function(x){
   #this loads the header exactly
   suppressMessages({
@@ -659,6 +654,167 @@ rv217_raw = ARV_notes %>%
   )
 ```
 
+## Flagging participants for exclusion
+
+
+```r
+summary_dat = rv217_raw %>%
+  group_by(ID) %>%
+  subset(!is.na(log10VL) & primary_kinetics) %>%
+  summarize(
+    total = n(),
+    setptVL4 = mean(log10VL[days >= 4*28]),
+    peakVL = max(log10VL),
+    peakVL_setPT = setptVL4/peakVL,
+    peakday = days[which.max(log10VL)],
+    avgVL = mean(log10VL),
+    sdVL = sd(log10VL),
+    CV = sdVL/avgVL
+  ) %>%
+  subset(total > 2)
+
+summary_dat %>%
+  gather(VLstat, X, setptVL4:CV) %>%
+  ggplot(aes(x = X)) +
+  geom_histogram(bins = 51) +
+  scale_x_continuous("") +
+  facet_wrap(~VLstat, scales = "free_x", strip.position = "bottom") +
+  theme(strip.placement = "outside", strip.background = element_blank())
+```
+
+```
+## Warning: Removed 10 rows containing non-finite values (stat_bin).
+```
+
+![](RV217-DataClean_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+
+
+```r
+peakday_filter = 100
+peakVL_filter= 5
+
+summary_dat %>%
+  ungroup() %>%
+  dplyr::select(-ID, -total) %>%
+  mutate(filter = peakday >= peakday_filter | peakVL < peakVL_filter) %>%
+  GGally::ggpairs(mapping = aes(colour = factor(filter)),
+                  columns = names(summary_dat)[-c(1, 2)])
+```
+
+```
+## Registered S3 method overwritten by 'GGally':
+##   method from   
+##   +.gg   ggplot2
+```
+
+```
+## Warning: Removed 5 rows containing non-finite values (stat_density).
+```
+
+```
+## Warning in (function (data, mapping, alignPercent = 0.6, method =
+## "pearson", : Removed 5 rows containing missing values
+```
+
+```
+## Warning in (function (data, mapping, alignPercent = 0.6, method =
+## "pearson", : Removed 5 rows containing missing values
+```
+
+```
+## Warning in (function (data, mapping, alignPercent = 0.6, method =
+## "pearson", : Removed 5 rows containing missing values
+```
+
+```
+## Warning in (function (data, mapping, alignPercent = 0.6, method =
+## "pearson", : Removed 5 rows containing missing values
+```
+
+```
+## Warning in (function (data, mapping, alignPercent = 0.6, method =
+## "pearson", : Removed 5 rows containing missing values
+```
+
+```
+## Warning in (function (data, mapping, alignPercent = 0.6, method =
+## "pearson", : Removed 5 rows containing missing values
+```
+
+```
+## Warning: Removed 5 rows containing missing values (geom_point).
+```
+
+```
+## Warning in (function (data, mapping, alignPercent = 0.6, method =
+## "pearson", : Removed 5 rows containing missing values
+```
+
+```
+## Warning: Removed 5 rows containing missing values (geom_point).
+
+## Warning: Removed 5 rows containing missing values (geom_point).
+```
+
+```
+## Warning: Removed 5 rows containing non-finite values (stat_density).
+```
+
+```
+## Warning in (function (data, mapping, alignPercent = 0.6, method =
+## "pearson", : Removed 5 rows containing missing values
+```
+
+```
+## Warning in (function (data, mapping, alignPercent = 0.6, method =
+## "pearson", : Removed 5 rows containing missing values
+```
+
+```
+## Warning in (function (data, mapping, alignPercent = 0.6, method =
+## "pearson", : Removed 5 rows containing missing values
+```
+
+```
+## Warning in (function (data, mapping, alignPercent = 0.6, method =
+## "pearson", : Removed 5 rows containing missing values
+```
+
+```
+## Warning: Removed 5 rows containing missing values (geom_point).
+
+## Warning: Removed 5 rows containing missing values (geom_point).
+
+## Warning: Removed 5 rows containing missing values (geom_point).
+
+## Warning: Removed 5 rows containing missing values (geom_point).
+
+## Warning: Removed 5 rows containing missing values (geom_point).
+
+## Warning: Removed 5 rows containing missing values (geom_point).
+
+## Warning: Removed 5 rows containing missing values (geom_point).
+
+## Warning: Removed 5 rows containing missing values (geom_point).
+```
+
+![](RV217-DataClean_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+
+```r
+filtered_id = subset(summary_dat,  peakday >= peakday_filter | peakVL < peakVL_filter)$ID
+
+rv217_raw %>%
+  subset(ID %in% filtered_id & primary_kinetics) %>%
+  subset(!is.na(log10VL)) %>%
+  ggplot(aes(x = days, y = log10VL)) +
+  geom_point() + geom_line() +
+  facet_wrap(~ID)
+```
+
+![](RV217-DataClean_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
 # Finalize
 
 Order and save
@@ -667,45 +823,8 @@ Order and save
 ```r
 names(rv217_raw) = str_remove_all(names(rv217_raw), "\\.")
 glimpse(rv217_raw)
-```
 
-```
-## Observations: 1,486
-## Variables: 30
-## Groups: ID [55]
-## $ ID               <int> 10066, 10066, 10066, 10066, 10066, 10066, 10066…
-## $ arv_day          <dbl> 906, 906, 906, 906, 906, 906, 906, 906, 906, 90…
-## $ draw_date        <chr> "4-Feb-10", "18-Feb-10", "22-Jul-10", "6-Jan-11…
-## $ days_dx          <dbl> -588, -574, -420, -252, -84, -21, 0, 1, 4, 8, 1…
-## $ APTIMA           <chr> NA, NA, NA, NA, NA, "NR", "12.38", "15.12", "15…
-## $ log10VL          <dbl> NA, NA, NA, NA, NA, NA, NA, 4.76, 5.83, 6.26, 7…
-## $ VL               <int> NA, NA, NA, NA, NA, NA, NA, 57544, 676083, 1819…
-## $ VL_site          <chr> NA, NA, NA, NA, NA, NA, NA, "M", "M", "M", "M",…
-## $ FiebigStage      <chr> NA, NA, NA, NA, NA, NA, NA, "I-II", "I-II", "I-…
-## $ CD4pct           <dbl> NA, NA, NA, NA, NA, NA, NA, 47, NA, NA, NA, 25,…
-## $ CD8pct           <dbl> NA, NA, NA, NA, NA, NA, NA, 25, NA, NA, NA, 59,…
-## $ NKpct            <dbl> NA, NA, NA, NA, NA, NA, NA, 13, NA, NA, NA, 7, …
-## $ Bpct             <dbl> NA, NA, NA, NA, NA, NA, NA, 13, NA, NA, NA, 8, …
-## $ CD4              <dbl> NA, NA, NA, NA, NA, NA, NA, 824, NA, NA, NA, 39…
-## $ CD8              <dbl> NA, NA, NA, NA, NA, NA, NA, 442, NA, NA, NA, 92…
-## $ NK               <dbl> NA, NA, NA, NA, NA, NA, NA, 212, NA, NA, NA, 12…
-## $ B                <dbl> NA, NA, NA, NA, NA, NA, NA, 212, NA, NA, NA, 12…
-## $ VLunit           <chr> "copies/mL", "copies/mL", "copies/mL", "copies/…
-## $ priority         <chr> "Priority 1", "Priority 1", "Priority 1", "Prio…
-## $ site             <chr> "Uganda", "Uganda", "Uganda", "Uganda", "Uganda…
-## $ Notes            <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,…
-## $ visit_code       <chr> "A", "B", "D", "F", "H", "SBV", "SBV", "1", "2"…
-## $ EIA              <chr> "NR", "NR", "NR", "NR", "NR", NA, NA, "NR", NA,…
-## $ WB               <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, "IN…
-## $ APTIMA_num       <dbl> NA, NA, NA, NA, NA, NA, 12.38, 15.12, 15.54, 14…
-## $ posVL            <lgl> FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE…
-## $ days             <dbl> -589, -575, -421, -253, -85, -22, -1, 0, 3, 7, …
-## $ arv_note         <lgl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,…
-## $ any_arv          <lgl> FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE…
-## $ primary_kinetics <lgl> FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE…
-```
 
-```r
 rv217_raw %>%
   select(ID, draw_date, days, VL, log10VL, VLunit, posVL, primary_kinetics, CD4, CD8, NK, B,
          APTIMA, APTIMA_num, days_dx, contains("pct"), everything()) %>%
