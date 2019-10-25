@@ -1,0 +1,33 @@
+[LONGITUDINAL]
+input={initT, aS,dS, tau,lBt0, lp,dI,n,V0}
+
+EQUATION:
+odeType=stiff
+
+g = 23          ; virus clearance rate [1/day]
+
+;parameter transformations
+Bt0 = 10^(lBt0) ; infectivity rate
+p = 10^(lp)
+
+
+;initial conditions
+t_0 = -initT 	;first positive time [days]
+
+S_0 = aS/dS	;assumes no real T cell depletion in very early infection
+V_0 = V0/1e3         	;viral load at 30 copies/mL detection limit
+
+;use approximate equilibrium at first positive
+P_0 =  tau*g*V_0/(p)
+
+;ODE model equations
+ddt_S = aS - dS*S - Bt0*S*V             ;susceptible cells [cells/uL]
+ddt_P = tau*Bt0*S*V - dI*P*P^n	        ;productively infected cells [cells/uL]
+ddt_V = p*P - g*V - Bt0*S*V  		;productive virus [virus/uL]
+
+Vout = log10((V)*1e3)
+
+OUTPUT:
+output={Vout}
+
+

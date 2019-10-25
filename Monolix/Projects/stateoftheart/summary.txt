@@ -1,0 +1,103 @@
+********************************************************************************
+*                        stateoftheart.mlxtran                                 *
+*                        September 23, 2019 at 13:59:51                        *
+*                        Monolix version : 5.0.1                               *
+********************************************************************************
+
+POPULATION PARAMETERS ESTIMATION _______________________________________________
+
+Fixed Effects ----------------------------    se_lin    rse(%)
+initT_pop                      :  4.52e-13       nan       nan
+aS_pop                         :         9                    
+dS_pop                         :  2.47e-05  1.79e-05      72.5
+tau_pop                        :      0.05                    
+lBt0_pop                       :     -3.47     0.131      3.78
+lp_pop                         :         3                    
+dI_pop                         :      1.87     0.703      37.6
+n_pop                          :     0.599    0.0862      14.4
+V0_pop                         :         1                    
+
+Standard Deviation of the Random Effects -
+omega_initT                    :        10                    
+omega_dS                       :     0.404      3.87       957
+omega_lBt0                     :     0.368     0.131      35.5
+omega_dI                       :     0.162       1.6       987
+omega_n                        :     0.265     0.113      42.5
+
+Error Model Parameters -------------------
+a                              :      1.48    0.0446      3.02
+
+Elapsed time (seconds) :    1e+02
+CPU time     (seconds) :  1.1e+03
+ _______________________________________________________________________________
+
+
+CORRELATION MATRIX OF THE ESTIMATES ____________________________________________
+
+Fisher by Linearization --------------------------------------------------------
+Correlation Matrix :
+ initT_pop       nan
+    dS_pop       nan         1
+  lBt0_pop       nan  -0.22828         1
+    dI_pop       nan     0.106  -0.26191         1
+     n_pop       nan   0.12248   0.52955  -0.72915         1
+  omega_dS       nan         0         0         0         0         1
+omega_lBt0       nan         0         0         0         0 -0.068664         1
+  omega_dI       nan         0         0         0         0  -0.02276   0.10141         1
+   omega_n       nan         0         0         0         0  -0.27018  -0.30964  -0.54698         1
+         a       nan         0         0         0         0  -0.11726  -0.12123  -0.12664  0.060244         1
+WARNING : Impossible to compute the eigen values of the correlation matrix.
+
+Elapsed time (seconds) :    0.36
+CPU time     (seconds) :       0
+ -------------------------------------------------------------------------------
+ _______________________________________________________________________________
+
+
+INDIVIDUAL PARAMETERS ESTIMATION _______________________________________________
+
+Individual Parameters Estimation by Conditional Mean ---------------------------
+              min        Q1    median        Q3       max
+initT :  0.000223  0.000793   0.00204   0.00335    0.0247
+aS    :         9         9         9         9         9
+dS    :  2.45e-05  2.64e-05  2.68e-05  2.72e-05  2.79e-05
+tau   :      0.05      0.05      0.05      0.05      0.05
+lBt0  :      -3.9      -3.6     -3.48     -3.35     -3.08
+lp    :         3         3         3         3         3
+dI    :      1.75      1.89       1.9      1.91      1.93
+n     :     0.327     0.608     0.634      0.66     0.706
+V0    :         1         1         1         1         1
+
+Elapsed time (seconds) :      85
+CPU time     (seconds) :   9e+02
+ -------------------------------------------------------------------------------
+
+Individual Parameters Estimation by Conditional Mode ---------------------------
+              min        Q1    median        Q3       max
+initT :   4.4e-13  4.51e-13  4.52e-13  4.55e-13   4.6e-13
+aS    :         9         9         9         9         9
+dS    :   2.2e-05  2.32e-05  2.42e-05  2.48e-05  2.55e-05
+tau   :      0.05      0.05      0.05      0.05      0.05
+lBt0  :     -3.89     -3.59     -3.48     -3.33     -3.12
+lp    :         3         3         3         3         3
+dI    :      1.76      1.86      1.88      1.89      1.93
+n     :     0.346     0.576     0.626     0.661     0.783
+V0    :         1         1         1         1         1
+
+Elapsed time (seconds) :     1.4
+CPU time     (seconds) :      11
+ -------------------------------------------------------------------------------
+ _______________________________________________________________________________
+
+
+LOG-LIKELIHOOD ESTIMATION ______________________________________________________
+                                               (lin)
+
+-2 x log-likelihood                 :        2296.76
+Akaike Information Criteria   (AIC) :        2316.76
+Bayesian Information Criteria (BIC) :        2335.05
+
+Elapsed time              (seconds) :          0.005
+CPU time                  (seconds) :              0
+ _______________________________________________________________________________
+
