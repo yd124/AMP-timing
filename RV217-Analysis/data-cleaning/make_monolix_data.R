@@ -2,7 +2,30 @@ library(tidyverse)
 
 exclude_ids = c("10502", "40640", "41002")
 
-tmp = read_csv("../../data/RV217Clean.csv") %>%
+raw_dat = read_csv("../../data/RV217Clean.csv") 
+
+
+# ----- Censoring ------------
+
+
+tmp_cens = raw_dat %>%
+  subset(primary_kinetics | days < 0) %>%
+  group_by(ID) %>%
+  mutate(total = n(), cens = days < 0) %>%
+  subset(total > 2)
+
+tmp_cens %>%
+  select(ID, days, log10VL, cens) %>%
+  subset(!ID %in% exclude_ids) %>%
+  write_csv("../../data/RV217MonoCens.csv")
+
+
+# ----- APTIMA prediction + censoring ------------
+
+
+# ----- No Censoring ------------
+
+tmp = raw_dat %>%
   subset(!is.na(log10VL) & primary_kinetics) %>%
   group_by(ID) %>%
   mutate(total = n()) %>%
@@ -27,7 +50,9 @@ tmp %>%
   write_csv("../../data/RV217MonoCells.csv")
 
 
-## compare to Dan's data
+
+# ----- Compare to Dan's data ------------
+
 dan_data = read_csv("../../Monolix/Data/DBRout_RV217.csv")
 test = tmp %>%
   subset(days_dx <= 100) %>%
