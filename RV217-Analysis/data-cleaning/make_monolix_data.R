@@ -82,6 +82,7 @@ raw_dat %>%
   ) %>%
   select(ID, days, log10VL, cens, APTIMA_num, predicted_VL, log10VL_pred,
          cens_pred, first_pred_day, cens_firstpred) %>%
+  subset(!ID %in% exclude_ids) %>%
   write_csv("../../data/RV217MonoVLPred.csv")
 
 
