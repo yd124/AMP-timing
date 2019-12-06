@@ -13,11 +13,11 @@ log10VL = {use=observation, name=log10VL, type=continuous}
 <MODEL>
 
 [INDIVIDUAL]
-input = {initT_pop, aS_pop, dS_pop, omega_dS, tau_pop, lBt0_pop, omega_lBt0, dI_pop, omega_initT, lp_pop, V0_pop, n_pop, omega_n, omega_dI}
+input = {initT_pop, aS_pop, dS_pop, omega_dS, tau_pop, lBt0_pop, omega_lBt0, dI_pop, omega_initT, lp_pop, V0_pop, n_pop, omega_n, omega_dI, omega_aS}
 
 DEFINITION:
 initT = {distribution=logNormal, typical=initT_pop, sd=omega_initT}
-aS = {distribution=logNormal, typical=aS_pop, no-variability}
+aS = {distribution=logNormal, typical=aS_pop, sd=omega_aS}
 dS = {distribution=logNormal, typical=dS_pop, sd=omega_dS}
 tau = {distribution=logNormal, typical=tau_pop, no-variability}
 lBt0 = {distribution=normal, typical=lBt0_pop, sd=omega_lBt0}

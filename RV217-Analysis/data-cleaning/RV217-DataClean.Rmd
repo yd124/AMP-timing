@@ -1,7 +1,7 @@
 ---
 title: "RV217 - Data Cleaning"
 author: "Bryan Mayer"
-date: "7/22/2019"
+date: "9/27/2019"
 output: 
   html_document:
     keep_md: true
@@ -12,7 +12,6 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 The following script cleans and tidies the raw RV217 data.
 
 **Some notes:**
@@ -20,7 +19,7 @@ The following script cleans and tidies the raw RV217 data.
   - `days` was recalculated to be from the time of the first positive viral load. 
     - Original days variable is now called `days_dx` for days from diagnosis (APTIMA  detection).
   - Used Dan's variable name conventions so our datasets have similar headers
-  - No long removing missing IDs, updated processing to handle this better
+  - Rows in the raw data with missing IDs are processed to be included
   - Added a variable for arv. arv day is relative to first positive viral load.
 
 **Some issues:**
@@ -36,6 +35,9 @@ The following script cleans and tidies the raw RV217 data.
 ```{r load-data}
 library(tidyverse)
 library(kableExtra)
+theme_set(theme_bw())
+
+save_data = F
 
 fix_names = function(x){
   #this loads the header exactly
@@ -376,11 +378,66 @@ rv217_raw = ARV_notes %>%
 
 ```
 
+## Flagging participants for exclusion
+
+```{r}
+
+summary_dat = rv217_raw %>%
+  group_by(ID) %>%
+  subset(!is.na(log10VL) & primary_kinetics) %>%
+  summarize(
+    total = n(),
+    setptVL4 = mean(log10VL[days >= 4*28]),
+    peakVL = max(log10VL),
+    peakVL_setPT = setptVL4/peakVL,
+    peakday = days[which.max(log10VL)],
+    avgVL = mean(log10VL),
+    sdVL = sd(log10VL),
+    CV = sdVL/avgVL
+  ) %>%
+  subset(total > 2)
+
+summary_dat %>%
+  gather(VLstat, X, setptVL4:CV) %>%
+  ggplot(aes(x = X)) +
+  geom_histogram(bins = 51) +
+  scale_x_continuous("") +
+  facet_wrap(~VLstat, scales = "free_x", strip.position = "bottom") +
+  theme(strip.placement = "outside", strip.background = element_blank())
+
+```
+
+
+```{r}
+peakday_filter = 100
+peakVL_filter= 5
+
+summary_dat %>%
+  ungroup() %>%
+  dplyr::select(-ID, -total) %>%
+  mutate(filter = peakday >= peakday_filter | peakVL < peakVL_filter) %>%
+  GGally::ggpairs(mapping = aes(colour = factor(filter)),
+                  columns = names(summary_dat)[-c(1, 2)])
+
+```
+
+```{r}
+filtered_id = subset(summary_dat,  peakday >= peakday_filter | peakVL < peakVL_filter)$ID
+
+rv217_raw %>%
+  subset(ID %in% filtered_id & primary_kinetics) %>%
+  subset(!is.na(log10VL)) %>%
+  ggplot(aes(x = days, y = log10VL)) +
+  geom_point() + geom_line() +
+  facet_wrap(~ID)
+
+```
+
 # Finalize
 
 Order and save
 
-```{r save-data}
+```{r save-data, eval = save_data}
 names(rv217_raw) = str_remove_all(names(rv217_raw), "\\.")
 glimpse(rv217_raw)
 

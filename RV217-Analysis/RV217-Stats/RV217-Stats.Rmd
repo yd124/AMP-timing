@@ -1,7 +1,7 @@
 ---
 title: "RV217 - Exploratory Stats"
 author: "Bryan Mayer"
-date: "7/10/2019"
+date: "`r Sys.Date()`"
 output: 
   html_document:
     keep_md: true
@@ -13,6 +13,14 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+<!---
+Creation Date: 07/10/2019
+Creation Author: Bryan Mayer
+--->
+
+
+
 # Setup
 
 ```{r load-data}
@@ -21,7 +29,7 @@ theme_set(theme_bw())
 
 # num2  keeps APTIMA missing when it didnt have a value 
 
-rv217 = read_csv("../data/RV217Clean.csv") %>%
+rv217 = read_csv("../../data/RV217Clean.csv") %>%
   mutate(APTIMA_num2 = case_when(
     APTIMA_num == as.numeric(APTIMA) ~ APTIMA_num,
     TRUE ~ NA_real_
