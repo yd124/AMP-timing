@@ -1,0 +1,133 @@
+********************************************************************************
+*                        parrenJVI2001.mlxtran                                 *
+*                        December 04, 2019 at 17:40:46                         *
+*                        Monolix version : 5.1.0                               *
+********************************************************************************
+
+
+POPULATION PARAMETERS ESTIMATION _______________________________________________
+
+Fixed Effects ----------------------------     se_sa    rse(%)
+initT_pop                      :         0                    
+aS_pop                         :      7.92      5.21      65.8
+dS_pop                         :   1.27e-5   8.67e-6        68
+tau_pop                        :         1                    
+Bt0_pop                        :  0.000345  0.000275      79.9
+beta_Bt0_doseTCID50            : -0.000219   0.00163       742
+p_pop                          :      1.81     0.118      6.52
+g_pop                          :        23                    
+dI_pop                         :      0.08                    
+n_pop                          :    0.0774    0.0344      44.5
+V0_pop                         :   8.02e-5       nan       nan
+beta_V0_doseTCID50             :  -0.00446   0.00181      40.7
+
+Standard Deviation of the Random Effects -
+omega_aS                       :      1.45     0.538      37.2
+omega_dS                       :     0.454     0.542       119
+omega_Bt0                      :     0.262     0.328       125
+omega_p                        :    0.0266       nan       nan
+omega_n                        :     0.997     0.454      45.5
+omega_V0                       :     0.376     0.509       135
+
+Error Model Parameters -------------------
+a                              :         1     0.137      13.7
+
+Elapsed time (seconds) :       60
+CPU time     (seconds) :   6.3e+2
+
+ _______________________________________________________________________________
+
+
+
+CORRELATION MATRIX OF THE ESTIMATES ____________________________________________
+
+
+Fisher by Stochastic Approximation ---------------------------------------------
+Correlation Matrix :
+             aS_pop         1
+             dS_pop   0.39654         1
+            Bt0_pop  -0.24307   0.15825         1
+beta_Bt0_doseTCID50  0.087399  -0.16181  -0.88013         1
+              p_pop   0.16432  0.080326  -0.38709   0.23572         1
+              n_pop  0.018709  -0.22419   -0.1865   0.11948  0.084617         1
+             V0_pop       nan       nan       nan       nan       nan       nan       nan
+ beta_V0_doseTCID50  0.082031   0.40386   0.14713  -0.21915  -0.36101  -0.18214       nan         1
+           omega_aS -0.088598  -0.37251  -0.35814   0.34049   0.36662   0.11034       nan  -0.22875         1
+           omega_dS  0.085121   0.21377   0.42439  -0.46152   0.15563 -0.025948       nan   -0.2772  -0.23284         1
+          omega_Bt0  -0.11848  -0.16593      0.33  -0.31239  -0.44333-0.0060348       nan  0.066584  -0.23279   0.24418         1
+            omega_p       nan       nan       nan       nan       nan       nan       nan       nan       nan       nan       nan       nan
+            omega_n-0.0045455   0.19569   0.15239 -0.095082  0.034161  -0.46363       nan   0.12268 -0.034393 -0.010705 -0.064268       nan         1
+           omega_V0 -0.058809  0.075678   0.41361  -0.39004  -0.63466  -0.12028       nan   0.35307  -0.39695  0.027405   0.51823       nan  0.050971         1
+                  a  -0.17172  -0.10072   0.28866  -0.23601  -0.42911  0.074787       nan    0.1156   -0.2288  0.039507   0.29828       nan  -0.24735   0.33396         1
+WARNING : Impossible to compute the eigen values of the correlation matrix.
+
+Elapsed time (seconds) :      10
+CPU time     (seconds) :      98
+
+ -------------------------------------------------------------------------------
+
+ _______________________________________________________________________________
+
+
+
+INDIVIDUAL PARAMETERS ESTIMATION _______________________________________________
+
+
+Individual Parameters Estimation by Conditional Mean ---------------------------
+              min        Q1    median        Q3       max
+initT :         0         0         0         0         0
+aS    :      1.36      5.62      7.36      19.4       117
+dS    :   1.17e-5   1.29e-5   1.32e-5   1.55e-5   1.76e-5
+tau   :         1         1         1         1         1
+Bt0   :  0.000303  0.000323   0.00033  0.000334   0.00037
+p     :       1.8      1.81      1.81      1.82      1.82
+g     :        23        23        23        23        23
+dI    :      0.08      0.08      0.08      0.08      0.08
+n     :    0.0209    0.0639      0.12     0.165     0.169
+V0    :   5.69e-6   6.07e-6   2.32e-5   5.28e-5   5.88e-5
+
+Elapsed time (seconds) :      13
+CPU time     (seconds) :  1.3e+2
+
+ -------------------------------------------------------------------------------
+
+
+Individual Parameters Estimation by Conditional Mode ---------------------------
+              min        Q1    median        Q3       max
+initT :         0         0         0         0         0
+aS    :      1.02      4.21      5.95      16.5       104
+dS    :   1.18e-5   1.27e-5   1.32e-5   1.36e-5   1.56e-5
+tau   :         1         1         1         1         1
+Bt0   :  0.000292  0.000307  0.000313  0.000324  0.000339
+p     :      1.81      1.81      1.81      1.82      1.82
+g     :        23        23        23        23        23
+dI    :      0.08      0.08      0.08      0.08      0.08
+n     :    0.0215    0.0418      0.14     0.166      0.19
+V0    :   5.35e-6   5.61e-6   2.05e-5   4.97e-5   5.29e-5
+
+Elapsed time (seconds) :    0.92
+CPU time     (seconds) :       5
+
+ -------------------------------------------------------------------------------
+
+ _______________________________________________________________________________
+
+
+
+LOG-LIKELIHOOD ESTIMATION ______________________________________________________
+                                                            (is)
+
+-2 x log-likelihood                             :         202.19
+Akaike Information Criteria               (AIC) :         232.19
+Corrected Bayesian Information Criteria  (BICc) :         250.44
+Bayesian Information Criteria             (BIC) :         235.15
+
+Elapsed time                          (seconds) :           9.71
+CPU time                              (seconds) :          53.00
+
+
+[Importance Sampling] Standard error        : 0.043
+                      Sampling distribution : T-distribution with 5 degrees of freedom
+
+ _______________________________________________________________________________
+

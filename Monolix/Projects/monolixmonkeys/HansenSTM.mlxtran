@@ -1,0 +1,74 @@
+<DATAFILE>
+
+[FILEINFO]
+file = 'HansenSTM.csv'
+delimiter = comma
+header = {EMPTY, time_weeks, id_monkey, value, obs_log10VL, censor, time_days}
+
+[CONTENT]
+id_monkey = {use=identifier}
+obs_log10VL = {use=observation, name=obs_log10VL, type=continuous}
+censor = {use=censored}
+time_days = {use=time}
+
+<MODEL>
+
+[INDIVIDUAL]
+input = {Bt0_pop, omega_Bt0, V0_pop, aS_pop, omega_aS, dI_pop, dS_pop, omega_dS, g_pop, initT_pop, omega_initT, n_pop, omega_n, p_pop, tau_pop, omega_p}
+
+DEFINITION:
+Bt0 = {distribution=logNormal, typical=Bt0_pop, sd=omega_Bt0}
+V0 = {distribution=logNormal, typical=V0_pop, no-variability}
+aS = {distribution=logNormal, typical=aS_pop, sd=omega_aS}
+dI = {distribution=logNormal, typical=dI_pop, no-variability}
+dS = {distribution=logNormal, typical=dS_pop, sd=omega_dS}
+g = {distribution=logNormal, typical=g_pop, no-variability}
+initT = {distribution=normal, typical=initT_pop, sd=omega_initT}
+n = {distribution=logNormal, typical=n_pop, sd=omega_n}
+p = {distribution=logNormal, typical=p_pop, sd=omega_p}
+tau = {distribution=logNormal, typical=tau_pop, no-variability}
+
+[LONGITUDINAL]
+input = {a}
+
+file = 'HCmodel.txt'
+
+DEFINITION:
+obs_log10VL = {distribution=normal, prediction=Vout, errorModel=constant(a)}
+
+<FIT>
+data = obs_log10VL
+model = obs_log10VL
+
+<PARAMETER>
+Bt0_pop = {value=0.0004413687, method=MLE}
+V0_pop = {value=0.001, method=FIXED}
+a = {value=0.759252536779912, method=MLE}
+aS_pop = {value=20.28003, method=MLE}
+dI_pop = {value=0.8, method=FIXED}
+dS_pop = {value=0.08892124, method=MLE}
+g_pop = {value=23, method=FIXED}
+initT_pop = {value=15.11904, method=MLE}
+n_pop = {value=0.2523804, method=MLE}
+omega_Bt0 = {value=0.3582868667277307, method=MLE}
+omega_aS = {value=0.9975843940701052, method=MLE}
+omega_dS = {value=1.587485230957027, method=MLE}
+omega_initT = {value=2.449658448273161, method=MLE}
+omega_n = {value=0.5662303559532605, method=MLE}
+omega_p = {value=1, method=MLE}
+p_pop = {value=5373, method=MLE}
+tau_pop = {value=1, method=FIXED}
+
+<MONOLIX>
+
+[TASKS]
+populationParameters()
+individualParameters(method = {conditionalMean, conditionalMode })
+fim(method = StochasticApproximation)
+logLikelihood(method = ImportanceSampling)
+plotResult(method = {outputplot, indfits, obspred, residualsscatter, residualsdistribution, parameterdistribution, covariatemodeldiagnosis, randomeffects, covariancemodeldiagnosis, saemresults })
+
+[SETTINGS]
+GLOBAL:
+exportpath = 'HansenSTM'
+

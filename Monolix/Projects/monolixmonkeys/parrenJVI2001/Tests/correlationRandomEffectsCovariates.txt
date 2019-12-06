@@ -1,0 +1,7 @@
+eta,covariate,statistics,p-value,test
+eta_aS,doseTCID50,-1.08311,0.314651,Pearson
+eta_dS,doseTCID50,-1.75215,0.123206,Pearson
+eta_Bt0,doseTCID50,2.3893,0.0482181,Pearson
+eta_p,doseTCID50,0.26364,0.79965,Pearson
+eta_n,doseTCID50,-0.404042,0.698241,Pearson
+eta_V0,doseTCID50,-1.3565,0.217063,Pearson

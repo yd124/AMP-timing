@@ -1,0 +1,79 @@
+<DATAFILE>
+
+[FILEINFO]
+file = 'parrenJVI2001.csv'
+delimiter = comma
+header = {EMPTY, id_monkey, time_days, observation_log10VL, doseTCID50, censor}
+
+[CONTENT]
+id_monkey = {use=identifier}
+time_days = {use=time}
+observation_log10VL = {use=observation, name=observation_log10VL, type=continuous}
+doseTCID50 = {use=covariate, type=continuous}
+censor = {use=censored}
+
+<MODEL>
+
+[COVARIATE]
+input = doseTCID50
+
+[INDIVIDUAL]
+input = {V0_pop, aS_pop, omega_aS, dI_pop, dS_pop, omega_dS, initT_pop, n_pop, omega_n, tau_pop, doseTCID50, beta_V0_doseTCID50, Bt0_pop, omega_Bt0, g_pop, p_pop, omega_p, omega_V0}
+
+DEFINITION:
+V0 = {distribution=logNormal, typical=V0_pop, covariate=doseTCID50, coefficient=beta_V0_doseTCID50, sd=omega_V0}
+aS = {distribution=logNormal, typical=aS_pop, sd=omega_aS}
+dI = {distribution=logNormal, typical=dI_pop, no-variability}
+dS = {distribution=logNormal, typical=dS_pop, sd=omega_dS}
+initT = {distribution=normal, typical=initT_pop, no-variability}
+n = {distribution=logNormal, typical=n_pop, sd=omega_n}
+tau = {distribution=logNormal, typical=tau_pop, no-variability}
+Bt0 = {distribution=logNormal, typical=Bt0_pop, sd=omega_Bt0}
+g = {distribution=logNormal, typical=g_pop, no-variability}
+p = {distribution=logNormal, typical=p_pop, sd=omega_p}
+
+[LONGITUDINAL]
+input = {a}
+
+file = 'HCmodel.txt'
+
+DEFINITION:
+observation_log10VL = {distribution=normal, prediction=Vout, errorModel=constant(a)}
+
+<FIT>
+data = observation_log10VL
+model = observation_log10VL
+
+<PARAMETER>
+Bt0_pop = {value=0.000320957518685, method=MLE}
+V0_pop = {value=0.0000894112882695, method=MLE}
+a = {value=1.007089417408679, method=MLE}
+aS_pop = {value=8.048170742822972, method=MLE}
+beta_V0_doseTCID50 = {value=-0.0046451115494897, method=MLE}
+dI_pop = {value=0.08, method=FIXED}
+dS_pop = {value=0.0000128876146039, method=MLE}
+g_pop = {value=23, method=FIXED}
+initT_pop = {value=0, method=FIXED}
+n_pop = {value=0.0749809390642616, method=MLE}
+omega_Bt0 = {value=1, method=MLE}
+omega_V0 = {value=1, method=MLE}
+omega_aS = {value=1.228632567447089, method=MLE}
+omega_dS = {value=8.372611931254905, method=MLE}
+omega_n = {value=0.6517894097677214, method=MLE}
+omega_p = {value=1, method=MLE}
+p_pop = {value=1.812472620342305, method=MLE}
+tau_pop = {value=1, method=FIXED}
+
+<MONOLIX>
+
+[TASKS]
+populationParameters()
+individualParameters(method = {conditionalMean, conditionalMode })
+fim(method = StochasticApproximation)
+logLikelihood(method = ImportanceSampling)
+plotResult(method = {outputplot, indfits, obspred, residualsscatter, residualsdistribution, parameterdistribution, covariatemodeldiagnosis, randomeffects, covariancemodeldiagnosis, saemresults })
+
+[SETTINGS]
+GLOBAL:
+exportpath = 'parrenJVI2001'
+

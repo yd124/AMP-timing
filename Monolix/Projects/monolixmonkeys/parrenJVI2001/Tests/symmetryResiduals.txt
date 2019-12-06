@@ -1,0 +1,4 @@
+residuals,statistics,p-value,test
+IWRES_observation_log10VL,3.08314,0.00204831,Symmetry
+PWRES_observation_log10VL,0.0503334,0.959857,Symmetry
+NPDE_observation_log10VL,0.360382,0.718562,Symmetry

@@ -1,0 +1,3 @@
+parameter,covariate,statistics,p-value,test
+Bt0,doseTCID50,0.883404,0.406333,Pearson
+V0,doseTCID50,-33.3583,5.63473e-9,Pearson
