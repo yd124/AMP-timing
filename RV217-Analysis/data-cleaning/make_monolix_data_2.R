@@ -1,6 +1,6 @@
 library(tidyverse)
 
-exclude_ids = c("10502", "40640", "41002")
+exclude_ids = c("10502", "40640", "41002", "41146")
 
 raw_dat = read_csv("../../data/RV217Clean.csv") 
 
