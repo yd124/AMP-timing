@@ -1,7 +1,7 @@
 ---
 title: "RV217 - Exploratory Stats"
 author: "Bryan Mayer"
-date: "2019-10-09"
+date: "2020-05-17"
 output: 
   html_document:
     keep_md: true
@@ -58,6 +58,22 @@ rv217 = read_csv("../../data/RV217Clean.csv")  %>%
 
 ```
 ## See spec(...) for full column specifications.
+```
+
+```r
+pretty_pvalues = function (pvalues, digits = 3, 
+                           lower_cutoff = 0.001, missing_char = "---", 
+    include_p = FALSE, trailing_zeros = TRUE) 
+{
+    missing_p = which(is.na(pvalues))
+    below_cutoff_p = which(pvalues < lower_cutoff)
+    pvalues_new = round(pvalues, digits = digits)
+
+    pvalues_new[missing_p] = missing_char
+    pvalues_new[below_cutoff_p] = paste0("<", lower_cutoff)
+
+    pvalues_new
+}
 ```
 
 
@@ -153,7 +169,7 @@ pl2 = rv217 %>%
 cowplot::plot_grid(pl1, pl2, align = "v", nrow = 2)
 ```
 
-![](APTIMA-VL_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
+<img src="APTIMA-VL_files/figure-html/unnamed-chunk-2-1.png"  />
 
 # APTIMA vs. VL
 
@@ -242,7 +258,7 @@ rv217 %>%
   )
 ```
 
-![](APTIMA-VL_files/figure-html/vl-vs-aptima-1.png)<!-- -->
+<img src="APTIMA-VL_files/figure-html/vl-vs-aptima-1.png"  />
 
 ## At first positive VL
 
@@ -347,11 +363,20 @@ pl_log = rv217 %>%
   mutate(days_post_aptima = days_dx/7 - days/7) %>%
   select(ID, VL, log10VL, APTIMA_num, days_post_aptima) %>%
   na.omit() %>%
-  ggplot(aes(x = APTIMA_num, y = log10VL, colour = cut(days_post_aptima, breaks = 0:4, include.lowest = T))) +
+  ggplot(aes(x = APTIMA_num, y = log10VL, 
+             colour = cut(days_post_aptima, breaks = -1:3, 
+                          labels = 1:4, include.lowest = F))) +
   scale_x_log10("APTIMA (log-scale)") +
   scale_y_continuous() +
-  labs(colour = "weeks_post_dx") +
+  labs(colour = "Time first positive \n post-APTIMA (weeks)",
+              y = ""
+       )+
   geom_point() +
+  guides(col = guide_legend(nrow = 2)) + 
+  scale_color_discrete(
+    breaks = 1:4,
+    labels = c("Same", bquote("" <= 1), "1-2", "2-3", "X")
+    ) +
   theme(legend.position = "top")
 
 pl = rv217 %>%
@@ -359,19 +384,28 @@ pl = rv217 %>%
   mutate(days_post_aptima = days_dx/7 - days/7) %>%
   select(ID, VL, log10VL, APTIMA_num, days_post_aptima) %>%
   na.omit() %>%
-  ggplot(aes(x = APTIMA_num, y = log10VL, colour = cut(days_post_aptima, breaks = 0:4, include.lowest = T))) +
-  scale_x_continuous("APTIMA") +
-  scale_y_continuous() +
+  ggplot(aes(x = APTIMA_num, y = log10VL, 
+             colour = cut(days_post_aptima, breaks = -1:3, 
+                          labels = 1:4, include.lowest = F))) +
+  scale_x_continuous("APTIMA (Raw)") +
+  scale_y_continuous(expression(paste("viral load log"[10],"(copies/mL)"))) +
   labs(colour = "weeks_post_dx") +
   geom_point() +
   theme(legend.position = "none")
 
-cowplot::plot_grid(cowplot::get_legend(pl_log),
-                   cowplot::plot_grid(pl_log+theme(legend.position = "none"), pl),
-                   rel_heights = c(2, 12), nrow = 2)
+vl_aptima_scatter = cowplot::plot_grid(cowplot::get_legend(pl_log),
+                   cowplot::plot_grid(pl + theme(),
+                                       pl_log+theme(legend.position = "none",
+                                                    axis.text.y = element_blank())
+                                     ),
+                   rel_heights = c(2, 12), nrow = 2) 
+#%>% 
+#  cowplot::add_sub("APTIMA measurement") %>% 
+#  cowplot::ggdraw()
+vl_aptima_scatter 
 ```
 
-![](APTIMA-VL_files/figure-html/dx-vs-firstpos-1.png)<!-- -->
+<img src="APTIMA-VL_files/figure-html/dx-vs-firstpos-1.png"  />
 
 ## Modeling
 
@@ -417,12 +451,20 @@ mod_mse = map_df(25:max(mod_data$APTIMA_num), function(i){
   })
 })
 
-ggplot(mod_mse, aes(x = upper_limit, colour = aptima_trans, y = rmse)) +
+rmse_pl = ggplot(mod_mse, aes(x = upper_limit, colour = aptima_trans, y = rmse)) +
   geom_point() +
-  geom_line()
+  geom_line() +
+  labs(y = "RMSE", x = "Proposed APTIMA upper limit input", colour = "APTIMA transformation") +
+  scale_color_manual(breaks = c("APTIMA_num", "log10_APTIMA"),
+                       labels = c("Raw", bquote("Log"[10])),
+                     values = c("black", "blue")) +
+  theme(legend.position = "top")
+
+
+rmse_pl
 ```
 
-![](APTIMA-VL_files/figure-html/mse-crawl-1.png)<!-- -->
+<img src="APTIMA-VL_files/figure-html/mse-crawl-1.png"  />
 
 ```r
 final_mod = lm(log10VL ~ APTIMA_num, data = subset(mod_data, APTIMA_num >= 9 & APTIMA_num <= 34))
@@ -479,17 +521,25 @@ broom::tidy(final_mod) %>%
 
 
 ```r
-mod_data %>%
+my.formula = y ~ x
+
+final_mod_pl = mod_data %>%
+  filter(APTIMA_num >= 9 & APTIMA_num <= 34) %>%
   ggplot(aes(x = APTIMA_num, y = log10VL)) +
-  scale_x_continuous("APTIMA") +
-  scale_y_continuous() +
-  geom_smooth(data =subset(mod_data, APTIMA_num >= 9 & APTIMA_num <= 34), method = "lm") +
-  geom_smooth(se = FALSE, method = "lm", colour = "grey50", linetype = "dashed") +
-  geom_point() +
+  scale_x_continuous("APTIMA measurement") +
+  scale_y_continuous(expression(paste("viral load log"[10],"(copies/mL)"))) +
+  geom_smooth(data = , method = "lm", formula = my.formula, colour = "black") +
+  geom_point(data = mod_data) +
+  ggpmisc::stat_poly_eq(formula = my.formula, vjust = 0.2,
+                aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+                parse = TRUE) +
   theme(legend.position = "top")
+
+
+final_mod_pl
 ```
 
-![](APTIMA-VL_files/figure-html/comp-mod-1.png)<!-- -->
+<img src="APTIMA-VL_files/figure-html/comp-mod-1.png"  />
 
 # Predicting VL at APTIMA dx
 
@@ -509,21 +559,168 @@ pred_dat = rv217 %>%
                          interval = "prediction")[, 3]
   )
 
-pred_dat %>%
+pred_mod_pl = pred_dat %>%
   select(ID, missing_vl, in_range, log10VL, pred_log10VL, APTIMA_num) %>%
+  filter(in_range == TRUE) %>%
   rename(observed = log10VL, predicted = pred_log10VL) %>%
   gather(type, log10VL, observed, predicted) %>%
   ggplot(aes(x = APTIMA_num, y = log10VL)) +
-  geom_point(aes(colour = type, shape = in_range)) +
-  geom_ribbon(data = pred_res, aes(ymin = pred_lower, ymax = pred_upper), fill = "grey80", alpha = 0.5, colour = NA) +
+  geom_point(aes(colour = type)) +
+  #geom_ribbon(data = pred_res, aes(ymin = pred_lower, ymax = pred_upper), 
+  #            fill = "grey80", alpha = 0.5, colour = NA) +
   geom_line(aes(group = ID, colour = type)) + 
-  scale_x_continuous("APTIMA at diagnosis") +
-  labs(shape = "APTIMA in [9, 34]", colour = "VL at dx") +
+  scale_x_continuous("APTIMA measurement") +
+  scale_y_continuous(expression(paste("pred. viral load log"[10],"(copies/mL)"))) +
+  labs(colour = "VL at diagnosis") +
   theme(legend.position = "top")
+
+pred_mod_pl
 ```
 
-![](APTIMA-VL_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+<img src="APTIMA-VL_files/figure-html/unnamed-chunk-4-1.png"  />
 
+
+
+```r
+predicted_dat = read_csv("../../data/RV217MonoVLPred.csv") 
+```
+
+```
+## Parsed with column specification:
+## cols(
+##   ID = col_double(),
+##   days = col_double(),
+##   log10VL = col_double(),
+##   cens = col_logical(),
+##   APTIMA_num = col_double(),
+##   predicted_VL = col_logical(),
+##   log10VL_pred = col_double(),
+##   cens_pred = col_logical(),
+##   first_pred_day = col_double(),
+##   cens_firstpred = col_logical()
+## )
+```
+
+```r
+pred_pl = predicted_dat %>%
+  filter(ID == "10739") %>%
+  mutate(
+    log10VL_pred = if_else(days == -7, log10(20), log10VL_pred),
+    pch_cat = if_else(days == -7, 2, 1 * predicted_VL)
+    ) %>%
+  filter(!is.na(log10VL_pred)) %>%
+  select(days, log10VL_pred, pch_cat) %>%
+  ggplot(aes(x = days/7, y = log10VL_pred)) +
+  geom_line() +
+  geom_point(aes(shape = factor(pch_cat), fill = factor(pch_cat == 1)), size = 3) +
+  scale_shape_manual(values = c(21, 21, 4)) +
+  scale_fill_manual(values = c("black", "white")) +
+  geom_hline(yintercept = log10(20), linetype = "dashed") +
+  labs(x = "weeks post first positive", 
+       y = expression(paste("viral load log"[10],"(copies/mL)"))) +
+  theme_classic() +
+  theme(legend.position = "none")
+
+pred_pl
+```
+
+<img src="APTIMA-VL_files/figure-html/pred-example-1.png"  />
+
+
+```r
+cor_tab_all = rv217 %>%
+  subset(APTIMA_num > 3) %>%
+  select(ID, VL, log10VL, APTIMA_num) %>%
+  na.omit() %>% # complete case subsetting but not actually necessary
+  nest(data = everything()) %>%
+  summarize(
+    pearson = map(data, ~cor.test(~ APTIMA_num + log10VL, use = "complete.obs",
+                                 method = "spearman", data = .) %>% broom::tidy()),
+    spearman = map(data, ~cor.test(~ APTIMA_num + log10VL, use = "complete.obs", data = .) %>% broom::tidy()),
+    rmcorr = map(data, ~rmcorr::rmcorr(ID, log10VL, APTIMA_num, dataset = .x))
+    ) %>%
+  gather(type, cor, pearson, spearman) %>%
+  unnest(cor) %>%
+  mutate(first_pos = "All")
+
+
+cor_tab = rv217 %>%
+  subset(APTIMA_num > 3) %>%
+  select(ID, VL, days, log10VL, APTIMA_num) %>%
+  mutate(first_pos = as.character(days == 0)) %>%
+  na.omit() %>% # complete case subsetting but not actually necessary
+  group_by(first_pos) %>%
+  nest() %>%
+  summarize(
+    pearson = map(data, ~cor.test(~ APTIMA_num + log10VL, use = "complete.obs",
+                                 method = "spearman", data = .) %>% broom::tidy()),
+    spearman = map(data, ~cor.test(~ APTIMA_num + log10VL, use = "complete.obs", data = .) %>% broom::tidy())
+    #rmcorr = map(data, ~rmcorr::rmcorr(ID, log10VL, APTIMA_num, dataset = .x))
+    )  %>%
+  gather(type, cor, pearson, spearman) %>%
+  unnest(cor) %>%
+  mutate(first_pos = as.character(first_pos)) %>%
+  bind_rows(cor_tab_all) 
+
+rmcor_postFP = rmcorr::rmcorr(ID, log10VL, APTIMA_num, dataset = subset(rv217, days > 0))
+
+
+cor_tab_pl = cor_tab %>%
+  mutate(p.value = pretty_pvalues(p.value)) %>%
+  mutate_if(is.numeric, round, 3) %>%
+  unite(estimate, estimate, p.value, sep = " (") %>%
+  mutate(estimate = paste0(estimate, ")")) %>%
+  select(first_pos, type, estimate) %>%
+  pivot_wider(values_from = estimate, names_from = first_pos, names_prefix = "x") %>%
+  dplyr::select(` ` = type, `first positive` = xTRUE, overall = xAll) %>%
+  mutate(` ` = paste(` `, "\u03C1"))
+  
+
+pl_dat = rv217 %>%
+  subset(!is.na(log10VL) & !is.na(APTIMA_num) & APTIMA_num > 3)
+
+tt <- gridExtra::ttheme_default(base_size = 7, padding = unit(c(1, 1), "mm"))
+tt$core$fg_params <- list(fontface = matrix(c(1,2,2), 
+                                          ncol=ncol(cor_tab_pl),nrow=nrow(cor_tab_pl),byrow=TRUE),
+                          col = matrix(c("black", "black", "gray50"), 
+                                          ncol=ncol(cor_tab_pl),nrow=nrow(cor_tab_pl),byrow=TRUE),
+                          fontsize = 10)
+
+tt$core$bg_params = list(
+                     fill=c(rep("white",3),"white","white"),
+                     col=c("white","white","white","grey80","white"),
+                     alpha = rep(1,5))
+
+tt$colhead$bg_params = list(fill = "white", col = "white")
+tt$colhead$fg_params = list(fontsize = 10, fontface = 1)
+
+
+cor_pl = ggplot(pl_dat, aes(x = APTIMA_num, y = log10VL, colour = factor(days > 0))) +
+  geom_point(data = subset(pl_dat, days > 0)) +
+  geom_point(data = subset(pl_dat, days == 0)) +
+  scale_y_continuous(breaks = 1:4 * 2) +
+  scale_color_manual(values = c("black", "gray"),
+                     labels = c(bquote("true ("*rho=="0.83)"), 
+                                bquote("false ("*rho=="0.16)"))
+                     )+
+  labs(x = "APTIMA measurement", 
+       y = expression(paste("viral load log"[10],"(copies/mL)")),
+       colour = "first positive viral load") +
+  theme_classic() +
+  theme(legend.position = "top", text = element_text(size = 14)) 
+  #annotation_custom(gridExtra::tableGrob(cor_tab_pl, rows = NULL, theme = tt), 
+  #                  xmin=25, xmax=50, ymin=1.5, ymax=3)
+
+man_pl = cowplot::plot_grid(cor_pl, pred_pl + theme(text = element_text(size = 14)), 
+                            rel_widths = c(2,1.5), align = "h", axis = "bt")
+man_pl
+```
+
+<img src="APTIMA-VL_files/figure-html/manuscript-pl-1.png"  />
+
+```r
+#ggsave("manuscript_pl.png", man_pl, width = 9, height = 5)
+```
 
 # APTIMA and VL kinetics between dx and first positive
 
@@ -548,7 +745,7 @@ kinetic_dat %>%
   scale_x_continuous("Days before first pos")
 ```
 
-![](APTIMA-VL_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+<img src="APTIMA-VL_files/figure-html/unnamed-chunk-5-1.png"  />
 
 
 
@@ -580,7 +777,7 @@ pl2 = post_firstpos %>%
 cowplot::plot_grid(pl1, pl2)
 ```
 
-![](APTIMA-VL_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+<img src="APTIMA-VL_files/figure-html/unnamed-chunk-6-1.png"  />
 
 
 
@@ -608,7 +805,59 @@ post_firstpos %>%
   geom_smooth(method = "lm", se = F)
 ```
 
-![](APTIMA-VL_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+<img src="APTIMA-VL_files/figure-html/unnamed-chunk-7-1.png"  />
+
+
+```r
+library(cowplot)
+```
+
+```
+## 
+## ********************************************************
+```
+
+```
+## Note: As of version 1.0.0, cowplot does not change the
+```
+
+```
+##   default ggplot2 theme anymore. To recover the previous
+```
+
+```
+##   behavior, execute:
+##   theme_set(theme_cowplot())
+```
+
+```
+## ********************************************************
+```
+
+```r
+theme_set(theme_classic())
+
+supp_topB = cowplot::plot_grid(get_legend(rmse_pl + labs(colour = "APTIMA\ntransformation")+
+                                            guides(col = guide_legend(nrow = 2))),
+                               rmse_pl + theme(legend.position = "none"), rel_heights = c(2, 12),
+                               nrow = 2)
+
+supp_top =cowplot::plot_grid(vl_aptima_scatter, supp_topB, 
+                   nrow = 1, labels = LETTERS[1:2],
+                              align = "h", axis = "t")
+
+
+supp_bottom = cowplot::plot_grid(final_mod_pl, pred_mod_pl, nrow = 1, align = "h", axis = "bt",
+                                 labels = LETTERS[3:4])
+
+cowplot::plot_grid(supp_top, supp_bottom, nrow = 2)
+```
+
+<img src="APTIMA-VL_files/figure-html/supp-fig-1.png"  />
+
+```r
+theme_set(theme_bw())
+```
 
 
 # Save predicted data
