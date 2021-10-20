@@ -219,7 +219,7 @@ pl_log = rv217 %>%
   guides(col = guide_legend(nrow = 2)) + 
   scale_color_discrete(
     breaks = 1:4,
-    labels = c("Same", bquote("" <= 1), "1-2", "2-3", "X")
+    labels = c("Same", bquote("" <= 1), "1-2", "2-3")
     ) +
   theme(legend.position = "top")
 
@@ -483,8 +483,8 @@ cor_pl = ggplot(pl_dat, aes(x = APTIMA_num, y = log10VL, colour = factor(days > 
   geom_point(data = subset(pl_dat, days == 0)) +
   scale_y_continuous(breaks = 1:4 * 2) +
   scale_color_manual(values = c("black", "gray"),
-                     labels = c(bquote("true ("*rho=="0.83)"), 
-                                bquote("false ("*rho=="0.16)"))
+                     labels = c(bquote("true ("*r=="0.83)"), 
+                                bquote("false ("*r=="0.16)"))
                      )+
   labs(x = "APTIMA measurement", 
        y = expression(paste("viral load log"[10],"(copies/mL)")),
@@ -498,7 +498,10 @@ man_pl = cowplot::plot_grid(cor_pl, pred_pl + theme(text = element_text(size = 1
                             rel_widths = c(2,1.5), align = "h", axis = "bt")
 man_pl
 
-#ggsave("manuscript_pl.png", man_pl, width = 9, height = 5)
+ggsave("manuscript_pl.png", man_pl, width = 9, height = 5)
+
+ggsave("fig2.eps", man_pl, width = 9, height = 5)
+
 
 ```
 
@@ -601,6 +604,9 @@ supp_bottom = cowplot::plot_grid(final_mod_pl, pred_mod_pl, nrow = 1, align = "h
                                  labels = LETTERS[3:4])
 
 cowplot::plot_grid(supp_top, supp_bottom, nrow = 2)
+
+ggsave("figS8.eps", cowplot::plot_grid(supp_top, supp_bottom, nrow = 2), width = 8.5, height = 10)
+
 
 theme_set(theme_bw())
 ```

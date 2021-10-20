@@ -1,7 +1,7 @@
 ---
 title: "RV217 - Exploratory Stats"
 author: "Bryan Mayer"
-date: "2020-05-17"
+date: "2021-05-22"
 output: 
   html_document:
     keep_md: true
@@ -285,7 +285,13 @@ cor_apt_vl_1stpos = rv217 %>%
     pearson_cor = cor(aptima, vl, use = "complete.obs"),
     pearson_p = cor.test(aptima, vl)$p.value
     )
+```
 
+```
+## `summarise()` has grouped output by 'vl_trans', 'aptima_trans', 'spearman_cor'. You can override using the `.groups` argument.
+```
+
+```r
 cor_apt_vl_1stpos %>%
   ungroup() %>%
   mutate_if(is.numeric, round, 3) %>%
@@ -317,7 +323,7 @@ cor_apt_vl_1stpos %>%
    <td style="text-align:left;"> log10 </td>
    <td style="text-align:left;"> Raw </td>
    <td style="text-align:right;vertical-align: middle !important;" rowspan="4"> 0.83 </td>
-   <td style="text-align:right;vertical-align: middle !important;" rowspan="4"> 0 </td>
+   <td style="text-align:right;vertical-align: middle !important;" rowspan="4"> &lt;2.220446e-16 </td>
    <td style="text-align:right;"> 0.805 </td>
    <td style="text-align:right;"> 0.000 </td>
   </tr>
@@ -375,7 +381,7 @@ pl_log = rv217 %>%
   guides(col = guide_legend(nrow = 2)) + 
   scale_color_discrete(
     breaks = 1:4,
-    labels = c("Same", bquote("" <= 1), "1-2", "2-3", "X")
+    labels = c("Same", bquote("" <= 1), "1-2", "2-3")
     ) +
   theme(legend.position = "top")
 
@@ -700,8 +706,8 @@ cor_pl = ggplot(pl_dat, aes(x = APTIMA_num, y = log10VL, colour = factor(days > 
   geom_point(data = subset(pl_dat, days == 0)) +
   scale_y_continuous(breaks = 1:4 * 2) +
   scale_color_manual(values = c("black", "gray"),
-                     labels = c(bquote("true ("*rho=="0.83)"), 
-                                bquote("false ("*rho=="0.16)"))
+                     labels = c(bquote("true ("*r=="0.83)"), 
+                                bquote("false ("*r=="0.16)"))
                      )+
   labs(x = "APTIMA measurement", 
        y = expression(paste("viral load log"[10],"(copies/mL)")),
@@ -719,7 +725,9 @@ man_pl
 <img src="APTIMA-VL_files/figure-html/manuscript-pl-1.png"  />
 
 ```r
-#ggsave("manuscript_pl.png", man_pl, width = 9, height = 5)
+ggsave("manuscript_pl.png", man_pl, width = 9, height = 5)
+
+ggsave("fig2.eps", man_pl, width = 9, height = 5)
 ```
 
 # APTIMA and VL kinetics between dx and first positive
@@ -805,6 +813,10 @@ post_firstpos %>%
   geom_smooth(method = "lm", se = F)
 ```
 
+```
+## `geom_smooth()` using formula 'y ~ x'
+```
+
 <img src="APTIMA-VL_files/figure-html/unnamed-chunk-7-1.png"  />
 
 
@@ -856,6 +868,9 @@ cowplot::plot_grid(supp_top, supp_bottom, nrow = 2)
 <img src="APTIMA-VL_files/figure-html/supp-fig-1.png"  />
 
 ```r
+ggsave("figS8.eps", cowplot::plot_grid(supp_top, supp_bottom, nrow = 2), width = 8.5, height = 10)
+
+
 theme_set(theme_bw())
 ```
 

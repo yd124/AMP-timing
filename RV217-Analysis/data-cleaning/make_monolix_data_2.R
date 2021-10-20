@@ -88,7 +88,12 @@ raw_dat %>%
   select(ID, days, log10VL, log10VL_cens, cens, APTIMA_num, predicted_VL, log10VL_pred,
          cens_pred, first_pred_day, cens_firstpred) %>%
   subset(!ID %in% exclude_ids) %>%
-  write_csv("../../data/RV217MonoVLPred_2.csv")
+  #write_csv("../../data/RV217MonoVLPred_2.csv") %>%
+  filter(days == first_pred_day & !is.na(log10VL_pred) & is.na(log10VL) &
+           predicted_VL) %>%
+  nrow() #this counts the total subjects that were imputed
+  
+  
 
 
 
